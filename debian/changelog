@@ -1,0 +1,6 @@
+topgit (0.2-1) unstable; urgency=low
+
+  * Initial release (closes: #494710).
+
+ -- martin f. krafft <madduck@debian.org>  Mon, 11 Aug 2008 17:32:48 -0300
+
