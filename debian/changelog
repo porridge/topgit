@@ -1,3 +1,9 @@
+topgit (0.3-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- martin f. krafft <madduck@debian.org>  Wed, 10 Sep 2008 09:31:03 +0100
+
 topgit (0.2-1) unstable; urgency=low
 
   * Initial release (closes: #494710).
