@@ -20,7 +20,7 @@ die()
 # setup_hook NAME
 setup_hook()
 {
-	hook_call="\"\$(tg --hooks-path)\"/$1 \"\$@\""
+	hook_call="\"\$($tg --hooks-path)\"/$1 \"\$@\""
 	if [ -f "$git_dir/hooks/$1" ] &&
 	   fgrep -q "$hook_call" "$git_dir/hooks/$1"; then
 		# Another job well done!
@@ -77,7 +77,21 @@ measure_branch()
 # Whether B1 is a superset of B2.
 branch_contains()
 {
-	[ -z "$(git rev-list ^"$1" "$2")" ]
+	[ -z "$(git rev-list ^"$1" "$2" --)" ]
+}
+
+# ref_exists REF
+# Whether REF is a valid ref name
+ref_exists()
+{
+	git rev-parse --verify "$@" >/dev/null 2>&1
+}
+
+# has_remote BRANCH
+# Whether BRANCH has a remote equivalent (accepts top-bases/ too)
+has_remote()
+{
+	[ -n "$base_remote" ] && ref_exists "remotes/$base_remote/$1"
 }
 
 # recurse_deps CMD NAME [BRANCHPATH...]
@@ -95,18 +109,25 @@ recurse_deps()
 	_cmd="$1"; shift
 	_name="$1"; # no shift
 	_depchain="$*"
-	_depsfile="$(mktemp)"
-	git cat-file blob "$_name:.topdeps" >"$_depsfile"
+
+	_depsfile="$(mktemp -t tg-depsfile.XXXXXX)"
+	# Check also our base against remote base. Checking our head
+	# against remote head has to be done in the helper.
+	if has_remote "top-bases/$_name"; then
+		echo "refs/remotes/$base_remote/top-bases/$_name" >>"$_depsfile"
+	fi
+	git cat-file blob "$_name:.topdeps" >>"$_depsfile"
+
 	_ret=0
 	while read _dep; do
-		if ! git rev-parse --verify "$_dep" >/dev/null 2>&1; then
+		if ! ref_exists "$_dep" ; then
 			# All hope is lost
 			missing_deps="$missing_deps $_dep"
 			continue
 		fi
 
 		_dep_is_tgish=1
-		git rev-parse --verify "refs/top-bases/$_dep" >/dev/null 2>&1 ||
+		ref_exists "refs/top-bases/$_dep"  ||
 			_dep_is_tgish=
 
 		# Shoo shoo, keep our environment alone!
@@ -130,14 +151,19 @@ recurse_deps()
 # description for details) and set $_ret to non-zero.
 branch_needs_update()
 {
-	_dep_base_uptodate=1
+	_dep_base_update=
 	if [ -n "$_dep_is_tgish" ]; then
-		branch_contains "$_dep" "refs/top-bases/$_dep" || _dep_base_uptodate=
+		if has_remote "$_dep"; then
+			branch_contains "$_dep" "refs/remotes/$base_remote/$_dep" || _dep_base_update=%
+		fi
+		# This can possibly override the remote check result;
+		# we want to sync with our base first
+		branch_contains "$_dep" "refs/top-bases/$_dep" || _dep_base_update=:
 	fi
 
-	if [ -z "$_dep_base_uptodate" ]; then
-		# _dep needs to be synced with its base
-		echo ": $_dep $_depchain"
+	if [ -n "$_dep_base_update" ]; then
+		# _dep needs to be synced with its base/remote
+		echo "$_dep_base_update $_dep $_depchain"
 		_ret=1
 	elif [ -n "$_name" ] && ! branch_contains "refs/top-bases/$_name" "$_dep"; then
 		# Some new commits in _dep
@@ -150,7 +176,8 @@ branch_needs_update()
 # This function is recursive; it outputs reverse path from NAME
 # to the branch (e.g. B_DIRTY B1 B2 NAME), one path per line,
 # inner paths first. Innermost name can be ':' if the head is
-# not in sync with the base.
+# not in sync with the base or '%' if the head is not in sync
+# with the remote (in this order of priority).
 # It will also return non-zero status if NAME needs update.
 # If needs_update() hits missing dependencies, it will append
 # them to space-separated $missing_deps list and skip them.
@@ -195,8 +222,8 @@ do_help()
 			sep="|"
 		done
 
-		echo "TopGit v0.2 - A different patch queue manager"
-		echo "Usage: tg ($cmds|help) ..."
+		echo "TopGit v0.3 - A different patch queue manager"
+		echo "Usage: tg [-r REMOTE] ($cmds|help) ..."
 	elif [ -r "@sharedir@/tg-$1.txt" ] ; then
 		cat "@sharedir@/tg-$1.txt"
 	else
@@ -210,6 +237,8 @@ do_help()
 set -e
 git_dir="$(git rev-parse --git-dir)"
 root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
+base_remote="$(git config topgit.remote 2>/dev/null)" || :
+tg="tg"
 # make sure merging the .top* files will always behave sanely
 setup_ours
 setup_hook "pre-commit"
@@ -222,6 +251,11 @@ setup_hook "pre-commit"
 # We were sourced from another script for our utility functions;
 # this is set by hooks.
 [ -z "$tg__include" ] || return 0
+
+if [ "$1" = "-r" ]; then
+	shift; base_remote="$1"; shift
+	tg="$tg -r $base_remote"
+fi
 
 cmd="$1"
 [ -n "$cmd" ] || die "He took a duck in the face at two hundred and fifty knots"

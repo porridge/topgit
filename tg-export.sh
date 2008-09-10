@@ -18,7 +18,7 @@ while [ -n "$1" ]; do
 	--collapse)
 		driver=collapse;;
 	-*)
-		echo "Usage: tg export ([--collapse] NEWBRANCH | --quilt DIRECTORY)" >&2
+		echo "Usage: tg [...] export ([--collapse] NEWBRANCH | --quilt DIRECTORY)" >&2
 		exit 1;;
 	*)
 		[ -z "$output" ] || die "output already specified ($output)"
@@ -32,7 +32,7 @@ base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" 2>/dev/null)" 
 	die "not on a TopGit-controlled branch"
 
 
-playground="$(mktemp -d)"
+playground="$(mktemp -d -t tg-export.XXXXXX)"
 trap 'rm -rf "$playground"' EXIT
 
 
@@ -151,7 +151,7 @@ quilt()
 
 	echo "Exporting $_dep"
 	mkdir -p "$(dirname "$filename")"
-	tg patch "$_dep" >"$filename"
+	$tg patch "$_dep" >"$filename"
 	echo "$_dep.diff -p1" >>"$output/series"
 }
 
@@ -161,7 +161,7 @@ quilt()
 if [ "$driver" = "collapse" ]; then
 	[ -n "$output" ] ||
 		die "no target branch specified"
-	! git rev-parse --verify "$output" >/dev/null 2>&1 ||
+	! ref_exists "$output"  ||
 		die "target branch '$output' already exists; first run: git branch -D $output"
 
 elif [ "$driver" = "quilt" ]; then
@@ -190,7 +190,7 @@ recurse_deps driver "$name"
 
 
 if [ "$driver" = "collapse" ]; then
-	git update-ref "refs/heads/$output" "$(cat "$playground/$name")"
+	git update-ref "refs/heads/$output" "$(cat "$playground/$name")" ""
 
 	depcount="$(cat "$playground/^ticker" | wc -l)"
 	echo "Exported topic branch $name (total $depcount topics) to branch $output"

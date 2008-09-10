@@ -12,7 +12,7 @@ while [ -n "$1" ]; do
 	arg="$1"; shift
 	case "$arg" in
 	-*)
-		echo "Usage: tg patch [NAME]" >&2
+		echo "Usage: tg [...] patch [NAME]" >&2
 		exit 1;;
 	*)
 		[ -z "$name" ] || die "name already specified ($name)"
@@ -29,7 +29,7 @@ echo
 [ -n "$(git grep '^[-]--' "$name" -- ".topmsg")" ] || echo '---'
 
 # Evil obnoxious hack to work around the lack of git diff --exclude
-git_is_stupid="$(mktemp)"
+git_is_stupid="$(mktemp -t tg-patch-changes.XXXXXX)"
 git diff-tree --name-only "$base_rev" "$name" |
 	fgrep -vx ".topdeps" |
 	fgrep -vx ".topmsg" >"$git_is_stupid" || : # fgrep likes to fail randomly?
@@ -43,4 +43,4 @@ rm "$git_is_stupid"
 echo '-- '
 echo "tg: ($base_rev..) $name (depends on: $(git cat-file blob "$name:.topdeps" | paste -s -d' '))"
 branch_contains "$name" "$base_rev" ||
-	echo "tg: The patch is out-of-date wrt. the base! Run \`tg update\`."
+	echo "tg: The patch is out-of-date wrt. the base! Run \`$tg update\`."
