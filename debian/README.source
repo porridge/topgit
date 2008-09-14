@@ -6,10 +6,20 @@ refer to /usr/share/doc/quilt/README.source for information about how to use
 quilt for source packages.
 
 The quilt series is, however, generated from the Git repository, using TopGit
-itself. While subject to change, this currently happens as follows:
+itself. While subject to change, this currently happens as follows. Please
+make sure to have the latest version of TopGit (>= 0.3) installed before
+trying this:
 
-1. Branches in use
-~~~~~~~~~~~~~~~~~~
+1. Cloning the repository
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Cloning a TopGit repository requires an additional step to normal Git cloning:
+
+1. git clone ssh://git.debian.org/git/collab-maint/topgit.git
+2. cd topgit
+3. tg remote --populate origin
+
+Branches in use
+'''''''''''''''
 The following branches are in use in the package:
 
 - upstream: tracks the upstream Git repository
@@ -53,16 +63,16 @@ The upstream tarball for $VERSION can be obtained using pristine-tar:
 To build the package, you check out the build branch, recreate debian/patches,
 commit, build, test, upload, tag:
 
- 1. git checkout build && git rm -r debian/patches
- 2. tg create stage-0.2-1 fixes/destdir debian/locations ...
- 3. git commit -m'staging 0.2-1'
- 4. tg export --quilt debian/patches
- 5. rm debian/patches/stage-*
- 6. sed -i '/^stage-/d' debian/patches/series
- 7. git checkout -f build && git add debian/patches
- 8. git commit -m'preparing 0.2-1'
- 9. build, test, upload, tag ('debian/topgit-0.2-1')
-10. tg delete stage-0.2-1
+ 1. tg create stage-0.3-1 debian/locations
+ 2. git commit -m'staging 0.3-1'
+ 3. tg export --quilt debian/patches.new
+ 4. rm debian/patches.new/stage-*
+ 5. sed -i '/^stage-/d' debian/patches.new/series
+ 6. git checkout build && git rm -r debian/patches
+ 7. mv debian/patches.new debian/patches && git add debian/patches
+ 8. git commit -m'preparing 0.3-1'
+ 9. build, test, upload, tag ('debian/topgit-0.3-1')
+10. tg delete stage-0.3-1
 
 This process is still very cumbersome and needs to be improved, ideally within
 TopGit.
@@ -77,11 +87,20 @@ then update all TopGit branches:
 2. git pull
 3. git checkout master
 4. git merge upstream
-5. tg summary
-6. for every branch that is prefixed with 'D' in the output:
-     git checkout $BRANCH && tg update
 
-6. Building an upstream tarball
+Now proceed as in the next step.
+
+6. Making changes to the master branch
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If you make changes to the master branch (the "debianisation" branch), follow
+this procedure:
+
+1. tg summary
+2. for every branch that is prefixed with 'D' in the output:
+     git checkout $BRANCH && tg update
+3. git checkout build && git merge master
+
+7. Building an upstream tarball
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Until upstream provides official tarballs, the following can be used to create
 them for Debian:
