@@ -1,6 +1,6 @@
 topgit (0.3-1) unstable; urgency=low
 
-  * New upstream release.
+  * New upstream release (closes: #498559).
   * Retire fixes/destdir branch as upstream does it better; amend debian/rules
     to set $prefix instead of $PREFIX.
   * Updated README.source to reflect TopGit remote handling and slight changes
