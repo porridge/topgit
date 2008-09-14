@@ -7,20 +7,34 @@
 ## Parse options
 
 if [ -n "$1" ]; then
-	echo "Usage: tg summary" >&2
+	echo "Usage: tg [...] summary" >&2
 	exit 1
 fi
+
+curname="$(git symbolic-ref HEAD | sed 's#^refs/\(heads\|top-bases\)/##')"
 
 
 ## List branches
 
 git for-each-ref refs/top-bases |
-	while read rev name ref; do
+	while read rev type ref; do
 		name="${ref#refs/top-bases/}"
 		missing_deps=
 
+		current=' '
+		[ "$name" != "$curname" ] || current='>'
 		nonempty=' '
 		! branch_empty "$name" || nonempty='0'
+		remote=' '
+		[ -z "$base_remote" ] || remote='l'
+		! has_remote "$name" || remote='r'
+		rem_update=' '
+		[ "$remote" != 'r' ] || ! ref_exists "refs/remotes/$base_remote/top-bases/$name" || {
+			branch_contains "refs/top-bases/$name" "refs/remotes/$base_remote/top-bases/$name" &&
+			branch_contains "$name" "refs/remotes/$base_remote/$name"
+		} || rem_update='R'
+		[ "$rem_update" = 'R' ] || branch_contains "refs/remotes/$base_remote/$name" "$name" 2>/dev/null ||
+			rem_update='L'
 		deps_update=' '
 		needs_update "$name" >/dev/null || deps_update='D'
 		deps_missing=' '
@@ -35,6 +49,6 @@ git for-each-ref refs/top-bases |
 			subject="(No commits)"
 		fi
 
-		printf '%s\t%-31s\t%s\n' "$nonempty$deps_update$deps_missing$base_update" \
+		printf '%s\t%-31s\t%s\n' "$current$nonempty$remote$rem_update$deps_update$deps_missing$base_update" \
 			"$name" "$subject"
 	done
