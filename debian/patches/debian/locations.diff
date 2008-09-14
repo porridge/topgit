@@ -9,21 +9,20 @@ Signed-off-by: martin f. krafft <madduck@debian.org>
  2 files changed, 7 insertions(+), 7 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index bafec26..07b549b 100644
+index b73a1f1..4aa48f4 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -1,8 +1,8 @@
- # Set PREFIX to wherever you want to install TopGit
- PREFIX = $(HOME)
- bindir = $(PREFIX)/bin
--cmddir = $(PREFIX)/libexec/topgit
--sharedir = $(PREFIX)/share/topgit
-+cmddir = $(PREFIX)/share/topgit
-+docdir = $(PREFIX)/share/doc/topgit
+@@ -1,7 +1,7 @@
+ prefix = $(HOME)
+ bindir = $(prefix)/bin
+-cmddir = $(prefix)/libexec/topgit
+-sharedir = $(prefix)/share/topgit
++cmddir = $(prefix)/share/topgit
++docdir = $(prefix)/share/doc/topgit
  hooksdir = $(cmddir)/hooks
  
  
-@@ -20,7 +20,7 @@ tg $(commands_out) $(hooks_out): % : %.sh
+@@ -19,7 +19,7 @@ tg $(commands_out) $(hooks_out): % : %.sh
  	@sed -e 's#@cmddir@#$(cmddir)#g;' \
  		-e 's#@hooksdir@#$(hooksdir)#g' \
  		-e 's#@bindir@#$(bindir)#g' \
@@ -32,7 +31,7 @@ index bafec26..07b549b 100644
  		$@.sh >$@+ && \
  	chmod +x $@+ && \
  	mv $@+ $@
-@@ -37,8 +37,8 @@ install:: all
+@@ -36,8 +36,8 @@ install:: all
  	install $(commands_out) "$(DESTDIR)$(cmddir)"
  	install -d -m 755 "$(DESTDIR)$(hooksdir)"
  	install $(hooks_out) "$(DESTDIR)$(hooksdir)"
@@ -44,19 +43,19 @@ index bafec26..07b549b 100644
  clean::
  	rm -f tg $(commands_out) $(hooks_out) $(help_out)
 diff --git a/tg.sh b/tg.sh
-index e5766fe..2339675 100644
+index b493399..dcc0867 100644
 --- a/tg.sh
 +++ b/tg.sh
-@@ -197,8 +197,8 @@ do_help()
+@@ -224,8 +224,8 @@ do_help()
  
- 		echo "TopGit v0.2 - A different patch queue manager"
- 		echo "Usage: tg ($cmds|help) ..."
+ 		echo "TopGit v0.3 - A different patch queue manager"
+ 		echo "Usage: tg [-r REMOTE] ($cmds|help) ..."
 -	elif [ -r "@sharedir@/tg-$1.txt" ] ; then
 -		cat "@sharedir@/tg-$1.txt"
-+	elif [ -r "@docdir@/tg-$1.txt" ] ; then
-+		cat "@docdir@/tg-$1.txt"
++        elif [ -r "@docdir@/tg-$1.txt" ] ; then
++                cat "@docdir@/tg-$1.txt"
  	else
  		echo "`basename $0`: no help for $1" 1>&2
  	fi
 -- 
-tg: (16ae579..) debian/locations (depends on: fixes/destdir master)
+tg: (6433286..) debian/locations (depends on: master)
