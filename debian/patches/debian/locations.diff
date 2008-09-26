@@ -9,7 +9,7 @@ Signed-off-by: martin f. krafft <madduck@debian.org>
  2 files changed, 7 insertions(+), 7 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index b73a1f1..4aa48f4 100644
+index 2c627af..835811e 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -1,7 +1,7 @@
@@ -22,7 +22,7 @@ index b73a1f1..4aa48f4 100644
  hooksdir = $(cmddir)/hooks
  
  
-@@ -19,7 +19,7 @@ tg $(commands_out) $(hooks_out): % : %.sh
+@@ -19,7 +19,7 @@ tg $(commands_out) $(hooks_out): % : %.sh Makefile
  	@sed -e 's#@cmddir@#$(cmddir)#g;' \
  		-e 's#@hooksdir@#$(hooksdir)#g' \
  		-e 's#@bindir@#$(bindir)#g' \
@@ -43,19 +43,19 @@ index b73a1f1..4aa48f4 100644
  clean::
  	rm -f tg $(commands_out) $(hooks_out) $(help_out)
 diff --git a/tg.sh b/tg.sh
-index b493399..dcc0867 100644
+index 7005f98..ecc6574 100644
 --- a/tg.sh
 +++ b/tg.sh
-@@ -224,8 +224,8 @@ do_help()
- 
- 		echo "TopGit v0.3 - A different patch queue manager"
- 		echo "Usage: tg [-r REMOTE] ($cmds|help) ..."
--	elif [ -r "@sharedir@/tg-$1.txt" ] ; then
--		cat "@sharedir@/tg-$1.txt"
-+        elif [ -r "@docdir@/tg-$1.txt" ] ; then
-+                cat "@docdir@/tg-$1.txt"
+@@ -227,8 +227,8 @@ do_help()
+ 	elif [ -r "@cmddir@"/tg-$1 ] ; then
+ 		@cmddir@/tg-$1 -h || :
+ 		echo
+-		if [ -r "@sharedir@/tg-$1.txt" ] ; then
+-			cat "@sharedir@/tg-$1.txt"
++		if [ -r "@docdir@/tg-$1.txt" ] ; then
++			cat "@docdir@/tg-$1.txt"
+ 		fi
  	else
  		echo "`basename $0`: no help for $1" 1>&2
- 	fi
 -- 
-tg: (6433286..) debian/locations (depends on: master)
+tg: (41ad0fd..) debian/locations (depends on: master)
