@@ -24,6 +24,15 @@ while [ -n "$1" ]; do
 done
 
 
+## Make sure our tree is clean
+
+git update-index --ignore-submodules --refresh || exit
+[ -z "$(git diff-index --cached --name-status -r --ignore-submodules HEAD --)" ] ||
+	die "the index is not clean"
+
+
+## Perform import
+
 get_commit_msg()
 {
 	commit="$1"
@@ -52,7 +61,7 @@ process_commit()
 	branch_name=$(get_branch_name "$commit")
 	info "---- Importing $commit to $branch_prefix$branch_name"
 	tg create "$branch_prefix""$branch_name"
-	git read-tree "$commit"
+	git cherry-pick --no-commit "$commit"
 	get_commit_msg "$commit" > .topmsg
 	git add -f .topmsg .topdeps
 	git commit -C "$commit"

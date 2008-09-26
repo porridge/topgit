@@ -4,6 +4,7 @@
 # GPLv2
 
 name=
+branches=
 output=
 driver=collapse
 
@@ -13,12 +14,14 @@ driver=collapse
 while [ -n "$1" ]; do
 	arg="$1"; shift
 	case "$arg" in
+	-b)
+		branches="$1"; shift;;
 	--quilt)
 		driver=quilt;;
 	--collapse)
 		driver=collapse;;
 	-*)
-		echo "Usage: tg [...] export ([--collapse] NEWBRANCH | --quilt DIRECTORY)" >&2
+		echo "Usage: tg [...] export [-b BRANCH1,BRANCH2...] ([--collapse] NEWBRANCH | --quilt DIRECTORY)" >&2
 		exit 1;;
 	*)
 		[ -z "$output" ] || die "output already specified ($output)"
@@ -31,23 +34,15 @@ name="$(git symbolic-ref HEAD | sed 's#^refs/heads/##')"
 base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" 2>/dev/null)" ||
 	die "not on a TopGit-controlled branch"
 
+[ -z "$branches" -o "$driver" = "quilt" ] ||
+	die "-b works only with the quilt driver"
+
 
 playground="$(mktemp -d -t tg-export.XXXXXX)"
 trap 'rm -rf "$playground"' EXIT
 
 
 ## Collapse driver
-
-# Trusty Cogito code:
-load_author()
-{
-	if [ -z "$GIT_AUTHOR_NAME" ] && echo "$1" | grep -q '^[^< ]'; then
-		export GIT_AUTHOR_NAME="$(echo "$1" | sed 's/ *<.*//')"
-	fi
-	if [ -z "$GIT_AUTHOR_EMAIL" ] && echo "$1" | grep -q '<.*>'; then
-		export GIT_AUTHOR_EMAIL="$(echo "$1" | sed 's/.*<\(.*\)>.*/\1/')"
-	fi
-}
 
 # pretty_tree NAME
 # Output tree ID of a cleaned-up tree without tg's artifacts.
@@ -69,19 +64,16 @@ collapsed_commit()
 	>"$playground/^body"
 
 	# Get commit message and authorship information
-	git cat-file blob "$name:.topmsg" >"$playground/^msg"
-	while read line; do
-		if [ -z "$line" ]; then
-			# end of header
-			cat >"$playground/^body"
-			break
-		fi
-		case "$line" in
-		From:*) load_author "${line#From: }";;
-		Subject:*) echo "${line#Subject: }" >>"$playground/^pre";;
-		*) echo "$line" >>"$playground/^post";;
-		esac
-	done <"$playground/^msg"
+	git cat-file blob "$name:.topmsg" | git mailinfo "$playground/^msg" /dev/null > "$playground/^info"
+
+	GIT_AUTHOR_NAME="$(sed -n '/^Author/ s/Author: //p' "$playground/^info")"
+	GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' "$playground/^info")"
+	GIT_AUTHOR_DATE="$(sed -n '/^Date/ s/Date: //p' "$playground/^info")"
+	SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$playground/^info")"
+
+	test -n "$GIT_AUTHOR_NAME" && export GIT_AUTHOR_NAME
+	test -n "$GIT_AUTHOR_EMAIL" && export GIT_AUTHOR_EMAIL
+	test -n "$GIT_AUTHOR_DATE" && export GIT_AUTHOR_DATE
 
 	# Determine parent
 	parent="$(cut -f 1 "$playground/$name^parents")"
@@ -95,14 +87,9 @@ collapsed_commit()
 			$(for p in $parent; do echo -p $p; done))"
 	fi
 
-	{
-		if [ -s "$playground/^pre" ]; then
-			cat "$playground/^pre"
-			echo
-		fi
-		cat "$playground/^body"
-		[ ! -s "$playground/^post" ] || cat "$playground/^post"
-	} | git commit-tree "$(pretty_tree "$name")" -p "$parent"
+	(printf '%s\n\n' "$SUBJECT"; cat "$playground/^msg") |
+	git stripspace |
+	git commit-tree "$(pretty_tree "$name")" -p "$parent"
 
 	echo "$name" >>"$playground/^ticker"
 }
@@ -176,6 +163,7 @@ fi
 
 driver()
 {
+	case $_dep in refs/remotes/*) return;; esac
 	branch_needs_update >/dev/null
 	[ "$_ret" -eq 0 ] ||
 		die "cancelling export of $_dep (-> $_name): branch not up-to-date"
@@ -185,8 +173,16 @@ driver()
 
 # Call driver on all the branches - this will happen
 # in topological order.
-recurse_deps driver "$name"
-(_ret=0; _dep="$name"; _name=""; _dep_is_tgish=1; driver)
+if [ -z "$branches" ]; then
+	recurse_deps driver "$name"
+	(_ret=0; _dep="$name"; _name=""; _dep_is_tgish=1; driver)
+else
+	echo "$branches" | tr ',' '\n' | while read _dep; do
+		_dep_is_tgish=1
+		$driver
+	done
+	name="$(echo "$branches" | sed 's/.*,//')"
+fi
 
 
 if [ "$driver" = "collapse" ]; then

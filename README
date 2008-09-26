@@ -253,6 +253,19 @@ tg delete
 
 	TODO: '-a' to delete all empty branches, depfix, revert
 
+tg depend
+~~~~~~~~~
+	Change dependencies of a TopGit-controlled topic branch.
+	This should have several subcommands, but only 'add' is
+	supported right now.
+
+	The 'add' subcommand takes an argument of a topic branch
+	to be added, adds it to '.topdeps', performs a commit and
+	then updates your topic branch accordingly. If you want to
+	do other things related to the dependency addition, like
+	adjusting '.topmsg', prepare them in the index before
+	calling 'tg depend add'.
+
 tg info
 ~~~~~~~
 	Show a summary information about the current or specified
@@ -272,11 +285,31 @@ tg patch
 	TODO: tg patch -i to base at index instead of branch,
 		-w for working tree
 
+tg mail
+~~~~~~~
+	Send a patch from the current or specified topic branch as
+	email.
+
+	Takes the patch given on the command line and emails it out.
+	Destination addresses such as To, Cc and Bcc are taken from the
+	patch header.
+
+	Since it actually boils down to `git send-email` please refer to
+	its documentation for details on how to setup email for git.
+	You can pass arbitrary options to this command through the
+	'-s' parameter, but you must double-quote everything.
+
+	TODO: 'tg mail patchfile' to mail an already exported patch
+	TODO: mailing patch series
+	TODO: specifying additional options and addresses on command
+	      line
+
 tg remote
 ~~~~~~~~~
 	Register given remote as TopGit-controlled. This will create
 	the namespace for the remote branch bases and teach 'git fetch'
-	and 'git push' to operate on them.
+	and 'git push' to operate on them. (Do NOT use 'git push --all'
+	for your pushes - plain 'git push' will do the right thing.)
 
 	It takes a mandatory remote name argument, and optional
 	'--populate' switch - use that for your origin-style remote,
@@ -362,6 +395,10 @@ tg export
 	and an argument specifying the directory
 	where the quilt series should be saved.
 
+	With '--quilt', you can also pass '-b' parameter followed by
+	a comma-separated explicit list of branches to export. This
+	mode of operation is currently not supported with collapse.
+
 	Usage: tg export ([--collapse] BRANCH | --quilt DIR)
 
 	TODO: Make stripping of non-essential headers configurable
@@ -369,8 +406,6 @@ tg export
 	TODO: --mbox option for other mode of operation
 	TODO: -n option to prevent exporting of empty patches
 	TODO: -a option to export all branches
-	TODO: Allow branches to be exported to be passed as arguments, default
-	      to the current branch if none are specified
 	TODO: For quilt exporting, use a temporary branch and remove it when
 	      done - this would allow producing conflict-less series
 
