@@ -79,14 +79,13 @@ TopGit.
 
 5. Importing a new upstream version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-To import a new upstream, pull it into the upstream branch, merge upstream
+To import a new upstream, update the remote, merge the tag you want to merge
 into the master branch, ideally together with an update to debian/changelog,
 then update all TopGit branches:
 
-1. git checkout upstream
-2. git pull
-3. git checkout master
-4. git merge upstream
+1. git remote update
+2. git checkout master
+3. git merge topgit-0.4
 
 Now proceed as in the next step.
 
