@@ -105,10 +105,12 @@ this procedure:
 Until upstream provides official tarballs, the following can be used to create
 them for Debian:
 
-1. git archive --prefix=$(git describe upstream)/ --verbose upstream \
-    | gzip -9 > ../$(git describe upstream | sed s,-,_,).orig.tar.gz
-2. pristine-tar commit ../$(git describe upstream | sed s,-,_,).orig.tar.gz \
-    upstream
+1. git checkout topgit-0.4
+2. git archive --prefix=$(git describe HEAD)/ --verbose HEAD \
+    | gzip -9 > ../$(git describe HEAD | sed s,-,_,).orig.tar.gz
+3. pristine-tar commit ../$(git describe HEAD | sed s,-,_,).orig.tar.gz \
+    HEAD
+4. git checkout master
 
 All comments and suggestions are welcome, especially those pertaining to
 auto-generating debian/changelog from commit logs.
