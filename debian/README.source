@@ -63,30 +63,29 @@ The upstream tarball for $VERSION can be obtained using pristine-tar:
 To build the package, you check out the build branch, recreate debian/patches,
 commit, build, test, upload, tag:
 
- 1. tg create stage-0.3-1 debian/locations
- 2. git commit -m'staging 0.3-1'
+ 1. tg create stage-0.4-1 debian/locations
+ 2. git commit -m'staging 0.4-1'
  3. tg export --quilt debian/patches.new
  4. rm debian/patches.new/stage-*
  5. sed -i '/^stage-/d' debian/patches.new/series
  6. git checkout build && git rm -r debian/patches
  7. mv debian/patches.new debian/patches && git add debian/patches
- 8. git commit -m'preparing 0.3-1'
- 9. build, test, upload, tag ('debian/topgit-0.3-1')
-10. tg delete stage-0.3-1
+ 8. git commit -m'preparing 0.4-1'
+ 9. build, test, upload, tag ('debian/topgit-0.4-1')
+10. tg delete stage-0.4-1
 
 This process is still very cumbersome and needs to be improved, ideally within
 TopGit.
 
 5. Importing a new upstream version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-To import a new upstream, pull it into the upstream branch, merge upstream
+To import a new upstream, update the remote, merge the tag you want to merge
 into the master branch, ideally together with an update to debian/changelog,
 then update all TopGit branches:
 
-1. git checkout upstream
-2. git pull
-3. git checkout master
-4. git merge upstream
+1. git remote update
+2. git checkout master
+3. git merge topgit-0.4
 
 Now proceed as in the next step.
 
@@ -105,10 +104,12 @@ this procedure:
 Until upstream provides official tarballs, the following can be used to create
 them for Debian:
 
-1. git archive --prefix=$(git describe upstream)/ --verbose upstream \
-    | gzip -9 > ../$(git describe upstream | sed s,-,_,).orig.tar.gz
-2. pristine-tar commit ../$(git describe upstream | sed s,-,_,).orig.tar.gz \
-    upstream
+1. git checkout topgit-0.4
+2. git archive --prefix=$(git describe HEAD)/ --verbose HEAD \
+    | gzip -9 > ../$(git describe HEAD | sed s,-,_,).orig.tar.gz
+3. pristine-tar commit ../$(git describe HEAD | sed s,-,_,).orig.tar.gz \
+    HEAD
+4. git checkout master
 
 All comments and suggestions are welcome, especially those pertaining to
 auto-generating debian/changelog from commit logs.

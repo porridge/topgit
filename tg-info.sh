@@ -20,7 +20,7 @@ while [ -n "$1" ]; do
 	esac
 done
 
-[ -n "$name" ] || name="$(git symbolic-ref HEAD | sed 's#^refs/heads/##')"
+[ -n "$name" ] || name="$(git symbolic-ref HEAD | sed 's#^refs/\(heads\|top-bases\)/##')"
 base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 
@@ -32,7 +32,7 @@ if [ "$(git rev-parse --short "$name")" = "$base_rev" ]; then
 	exit 0
 fi
 
-git cat-file blob "$name:.topmsg" | grep ^Subject:
+git cat-file blob "$name:.topmsg" | grep ^Subject: || :
 
 echo "Base: $base_rev"
 branch_contains "$name" "$base_rev" ||

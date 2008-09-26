@@ -3,19 +3,19 @@
 # (c) Petr Baudis <pasky@suse.cz>  2008
 # GPLv2
 
-force= # Whether to delete non-empty branch
 name=
 
 
 ## Parse options
 
+subcmd="$1"; shift
+[ "$subcmd" = "add" ] || die "unknown subcommand ($subcmd)"
+
 while [ -n "$1" ]; do
 	arg="$1"; shift
 	case "$arg" in
-	-f)
-		force=1;;
 	-*)
-		echo "Usage: tg [...] delete [-f] NAME" >&2
+		echo "Usage: tg [...] depend add NAME" >&2
 		exit 1;;
 	*)
 		[ -z "$name" ] || die "name already specified ($name)"
@@ -31,16 +31,11 @@ branchrev="$(git rev-parse --verify "$name" 2>/dev/null)" ||
 	die "invalid branch name: $name"
 baserev="$(git rev-parse --verify "refs/top-bases/$name" 2>/dev/null)" ||
 	die "not a TopGit topic branch: $name"
-! git symbolic-ref HEAD >/dev/null || [ "$(git symbolic-ref HEAD)" != "refs/heads/$name" ] ||
-	die "cannot delete your current branch"
-
-nonempty=
-branch_empty "$name" || nonempty=1
-
-[ -z "$nonempty" ] || [ -n "$force" ] || die "branch is non-empty: $name"
 
 
-## Wipe out
+## Record new dependency
 
-git update-ref -d "refs/top-bases/$name" "$baserev"
-git update-ref -d "refs/heads/$name" "$branchrev"
+echo "$name" >>.topdeps
+git add .topdeps
+git commit -m"New TopGit dependency: $name"
+$tg update
