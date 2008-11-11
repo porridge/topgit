@@ -1,7 +1,7 @@
 Building topgit for Debian
 --------------------------
 
-The topgit source package  uses quilt to apply and remove its patches. Please
+The topgit source package uses quilt to apply and remove its patches. Please
 refer to /usr/share/doc/quilt/README.source for information about how to use
 quilt for source packages.
 
@@ -17,6 +17,8 @@ Cloning a TopGit repository requires an additional step to normal Git cloning:
 1. git clone ssh://git.debian.org/git/collab-maint/topgit.git
 2. cd topgit
 3. tg remote --populate origin
+
+TODO: debcheckout support
 
 Branches in use
 '''''''''''''''
@@ -76,6 +78,9 @@ commit, build, test, upload, tag:
 
 This process is still very cumbersome and needs to be improved, ideally within
 TopGit.
+
+TODO: provide Makefile snippet for the above to prevent useless duplication (#501991)
+TODO: rewrite to use tg-export -b, which will be fixed in TopGit 0.5 (#500273)
 
 5. Importing a new upstream version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
