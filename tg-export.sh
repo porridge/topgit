@@ -21,7 +21,7 @@ while [ -n "$1" ]; do
 	--collapse)
 		driver=collapse;;
 	-*)
-		echo "Usage: tg [...] export [-b BRANCH1,BRANCH2...] ([--collapse] NEWBRANCH | --quilt DIRECTORY)" >&2
+		echo "Usage: tg [...] export ([--collapse] NEWBRANCH | [-b BRANCH1,BRANCH2...] --quilt DIRECTORY)" >&2
 		exit 1;;
 	*)
 		[ -z "$output" ] || die "output already specified ($output)"
@@ -30,12 +30,16 @@ while [ -n "$1" ]; do
 done
 
 
-name="$(git symbolic-ref HEAD | sed 's#^refs/heads/##')"
-base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" 2>/dev/null)" ||
-	die "not on a TopGit-controlled branch"
 
 [ -z "$branches" -o "$driver" = "quilt" ] ||
 	die "-b works only with the quilt driver"
+
+if [ -z "$branches" ]; then
+	# this check is only needed when no branches have been passed
+	name="$(git symbolic-ref HEAD | sed 's#^refs/heads/##')"
+	base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" 2>/dev/null)" ||
+		die "not on a TopGit-controlled branch"
+fi
 
 
 playground="$(mktemp -d -t tg-export.XXXXXX)"

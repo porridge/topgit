@@ -8,8 +8,16 @@ name=
 
 ## Parse options
 
-subcmd="$1"; shift
-[ "$subcmd" = "add" ] || die "unknown subcommand ($subcmd)"
+subcmd="$1"; shift || :
+case "$subcmd" in
+	-h|"")
+		echo "Usage: tg [...] depend add NAME" >&2
+		exit 1;;
+	add)
+		;;
+	*)
+		die "unknown subcommand ($subcmd)";;
+esac
 
 while [ -n "$1" ]; do
 	arg="$1"; shift
@@ -35,7 +43,7 @@ baserev="$(git rev-parse --verify "refs/top-bases/$name" 2>/dev/null)" ||
 
 ## Record new dependency
 
-echo "$name" >>.topdeps
-git add .topdeps
+echo "$name" >>"$root_dir/.topdeps"
+git add -f "$root_dir/.topdeps"
 git commit -m"New TopGit dependency: $name"
 $tg update

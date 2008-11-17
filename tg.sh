@@ -222,7 +222,7 @@ do_help()
 			sep="|"
 		done
 
-		echo "TopGit v0.4 - A different patch queue manager"
+		echo "TopGit v0.5 - A different patch queue manager"
 		echo "Usage: tg [-r REMOTE] ($cmds|help) ..."
 	elif [ -r "@cmddir@"/tg-$1 ] ; then
 		@cmddir@/tg-$1 -h || :
@@ -241,6 +241,8 @@ do_help()
 set -e
 git_dir="$(git rev-parse --git-dir)"
 root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
+# Make sure root_dir doesn't end with a trailing slash.
+root_dir="${root_dir%/}"
 base_remote="$(git config topgit.remote 2>/dev/null)" || :
 tg="tg"
 # make sure merging the .top* files will always behave sanely
