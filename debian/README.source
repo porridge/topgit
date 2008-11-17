@@ -88,6 +88,8 @@ debian/patches, commit, build, test, upload, tag:
 5. git commit -m'preparing 0.5-1'
 6. build, test, upload, tag ('debian/topgit-0.5-1')
 
+TODO: add a debian/NEWS entry to get people to switch to using this approach.
+
 5. Importing a new upstream version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To import a new upstream, update the remote, merge the tag you want to merge
