@@ -62,22 +62,31 @@ The upstream tarball for $VERSION can be obtained using pristine-tar:
 
 4. Building the package
 ~~~~~~~~~~~~~~~~~~~~~~~
-To build the package, you check out the build branch, recreate debian/patches,
-commit, build, test, upload, tag:
+To build the package, you are encouraged to include the TopGit make snippet at
+the top of debian/rules:
+
+  -include /usr/share/topgit/topgit.mk
+
+This will provide the tg-export target, which will create a quilt series of
+all TopGit branches in the current repository.
+
+You can also set the variable TG_BRANCHES to a space- or comma-separated list
+(but not comma and space) of feature branches to export, e.g.:
+
+  TG_BRANCH := branch1,branch2
+  TG_BRANCH := 'branch3 branch4 branch 5'
+
+(The TopGit package actually uses the local version of the file)
+
+When you are ready to build, you check out the build branch, recreate
+debian/patches, commit, build, test, upload, tag:
 
 1. git checkout build
 2. git merge master
-3. rm -r debian/patches
-4. tg export -b debian/locations --quilt debian/patches
-5. git add debian/patches
-6. git commit -m'preparing 0.5-1'
-7. build, test, upload, tag ('debian/topgit-0.5-1')
-
-This process is still very cumbersome and needs to be improved, ideally within
-TopGit.
-
-TODO: provide Makefile snippet for the above to prevent useless duplication (#501991)
-TODO: rewrite to use tg-export -b, which will be fixed in TopGit 0.5 (#500273)
+3. ./debian/rules tg-export
+4. git add debian/patches
+5. git commit -m'preparing 0.5-1'
+6. build, test, upload, tag ('debian/topgit-0.5-1')
 
 5. Importing a new upstream version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
