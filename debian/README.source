@@ -74,11 +74,12 @@ the top of debian/rules:
 This will provide the tg-export target, which will create a quilt series of
 all TopGit branches in the current repository.
 
-You can also set the variable TG_BRANCHES to a space- or comma-separated list
-(but not comma and space) of feature branches to export, e.g.:
+You can also set the variable TG_BRANCHES before the inclusion to a space- or
+comma-separated list (but not comma and space) of feature branches to export,
+e.g.:
 
-  TG_BRANCH := branch1,branch2
-  TG_BRANCH := 'branch3 branch4 branch 5'
+  TG_BRANCHES := branch1,branch2
+  TG_BRANCHES := 'branch3 branch4 branch 5'
 
 (The TopGit package actually uses the local version of the file)
 
