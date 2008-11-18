@@ -1,6 +1,7 @@
 topgit (0.5-1) unstable; urgency=low
 
-  * New upstream release.
+  * New upstream release (closes: #500273, #505266).
+  * Upstream added bash completion (closes: #499072).
   * Provide a TopGit Makefile snippet for inclusion from debian/rules and
     update the README.source workflow accordingly. See
     /usr/share/doc/topgit/README.source for details; thanks to Stefano
