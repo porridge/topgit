@@ -18,7 +18,11 @@ Cloning a TopGit repository requires an additional step to normal Git cloning:
 2. cd topgit
 3. tg remote --populate origin
 
-TODO: debcheckout support
+You can also use the debcheckout tool from the devscripts package:
+
+  debcheckout topgit
+
+which will do all the above for you automatically.
 
 Branches in use
 '''''''''''''''
