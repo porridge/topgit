@@ -4,7 +4,7 @@
 #export DH_VERBOSE=1
 
 include /usr/share/quilt/quilt.make
-include debian/topgit.mk
+include debian/tg2quilt.mk
 
 build: build-stamp
 build-stamp: patch
