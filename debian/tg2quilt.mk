@@ -48,7 +48,7 @@
 # Released under terms of the the Artistic Licence 2.0.
 #
 
-ifeq ($(shell tg summary -t)),)
+ifeq ($(shell tg summary -t),)
   # This is not a TopGit branch, so just blubber a bit.
 
   tg-export tg-clean tg-forceclean tg-rmdir:
