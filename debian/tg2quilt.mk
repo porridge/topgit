@@ -124,7 +124,7 @@ tg-clean: clean
 	$(MAKE) -f debian/rules tg-rmdir
 
 tg-forceclean: clean
-	test -d debian/patches && rm -r $(PATCHES_DIR) || :
+	test -d $(PATCHES_DIR) && rm -r $(PATCHES_DIR) || :
 
 endif
 
