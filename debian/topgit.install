@@ -1,2 +1,1 @@
-debian/topgit.mk usr/share/topgit
 debian/tg2quilt.mk usr/share/topgit
