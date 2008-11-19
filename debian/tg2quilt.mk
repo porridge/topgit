@@ -5,8 +5,9 @@
 # a quilt series.
 #
 # It is intended to be included from debian/rules files of TopGit-using
-# packages, like so:
+# packages after including the quilt rules, like so:
 #
+#   include /usr/share/quilt/quilt.make
 #   -include /usr/share/topgit/tg2quilt.mk
 #
 # The snippet exports the following targets. These targets only perform the
@@ -60,11 +61,11 @@ else
 
 # We are in a TopGit branch, so let the fun begin.
 
-PATCHES_DIR ?= debian/patches
+PATCHES_DIR ?= $(QUILT_PATCH_DIR)
 
 # Hook tg-export into quilt's make(1) snippet such that it gets executed
 # before quilt patches or unpatches.
-debian/stamp-patched: tg-export
+$(QUILT_STAMPFN): tg-export
 unpatch: __tg-temp-export
 __tg-temp-export:
 	@echo "Exporting TopGit branches to series so that quilt can clean up..." >&2
