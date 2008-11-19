@@ -131,3 +131,4 @@ endif
 .PHONY: tg-clean tg-export tg-forceclean tg-rmdir
 
 # vim:ft=make:ts=8:noet
+# -*- Makefile -*-, you silly Emacs! (shamelessly stolen from quilt)
