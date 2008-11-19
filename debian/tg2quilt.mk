@@ -69,7 +69,7 @@ $(QUILT_STAMPFN): tg-export
 unpatch: __tg-temp-export
 __tg-temp-export:
 	@echo "Exporting TopGit branches to series so that quilt can clean up..." >&2
-	$(MAKE) $(MAKEFLAGS) -f debian/rules tg-export
+	$(MAKE) -f debian/rules tg-export
 .PHONY: __tg-temp-export
 
 # Set some tg-export-specific variables, e.g. default TG_BRANCHES to all
@@ -121,7 +121,7 @@ endif
 
 # Make sure that we try to clean up the patches directory last
 tg-clean: clean
-	$(MAKE) $(MAKEFLAGS) -f debian/rules tg-rmdir
+	$(MAKE) -f debian/rules tg-rmdir
 
 tg-forceclean: clean
 	test -d debian/patches && rm -r $(PATCHES_DIR) || :
