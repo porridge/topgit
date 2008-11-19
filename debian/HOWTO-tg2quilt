@@ -93,7 +93,7 @@ directory. This can conveniently become the branch from which you build:
 
 1. git checkout build
 2. git merge master
-3. ./debian/rules tg-export
+3. ./debian/rules tg-cleanexport
 4. git add debian/patches
 5. git commit -m'preparing $VERSION'
 6. build, test, upload, tag ('debian/topgit-$VERSION')

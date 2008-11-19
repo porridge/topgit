@@ -34,6 +34,9 @@
 #                  removed. This means that edits to the series file are
 #                  likely to vanish.
 #
+#  tg-cleanexport: recreates the debian/patches directory from scratch, using
+#                  tg-rmdir and tg-export.
+#
 #   tg-forceclean: cleans the source tree, just like the debian/rules clean
 #                  target, and forcefully removes the debian/patches
 #                  directory in doing so. Yes, *force*-fully. WHAM!
@@ -55,7 +58,7 @@
 ifeq ($(shell tg summary -t),)
   # This is not a TopGit branch, so just blubber a bit.
 
-  tg-export tg-clean tg-forceclean tg-rmdir:
+  tg-export tg-clean tg-forceclean tg-rmdir tg-cleanexport:
 	@echo "E: The $@ target only works from a TopGit repository." >&2
 else
 
@@ -125,6 +128,9 @@ tg-clean: clean
 
 tg-forceclean: clean
 	test -d $(PATCHES_DIR) && rm -r $(PATCHES_DIR) || :
+
+tg-cleanexport: tg-rmdir
+	$(MAKE) --no-print-directory -f debian/rules tg-export
 
 endif
 

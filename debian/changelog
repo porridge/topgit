@@ -1,3 +1,10 @@
+topgit (0.5-2) unstable; urgency=low
+
+  * Provide new tg2quilt target tg-cleanexport, which recreates debian/patches
+    in one step.
+
+ -- martin f. krafft <madduck@debian.org>  Wed, 19 Nov 2008 17:58:45 +0100
+
 topgit (0.5-1) unstable; urgency=low
 
   * New upstream release (closes: #500273, #505266).
