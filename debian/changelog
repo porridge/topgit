@@ -4,7 +4,7 @@ topgit (0.5-1) unstable; urgency=low
   * Upstream added bash completion (closes: #499072).
   * Provide the tg2quilt Makefile snippet for inclusion from debian/rules to
     facilitate generation of the quilt series from TopGit branches. See
-    /usr/share/doc/topgit/HOWTO-tg2quilt for details; thanks to Stefano
+    /usr/share/doc/topgit/HOWTO-tg2quilt.gz for details; thanks to Stefano
     Zacchiroli for the idea that led to this (closes: #501991).
   * Update the README.source workflow to refer to HOWTO-tg2quilt.
   * Add a NEWS file to make sure people get notified of this change.

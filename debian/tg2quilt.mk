@@ -44,8 +44,11 @@
 # The PATCHES_DIR variable can be set before including the file to override
 # the default debian/patches location.
 #
-# Copyright © 2008 martin f. krafft <madduck@debian.org>
-# Released under terms of the the Artistic Licence 2.0.
+# More information, particularly for people working on TopGit-using packages,
+# can be found in /usr/share/doc/topgit/HOWTO-tg2quilt.gz .
+#
+# Copyright © 2008 martin f. krafft <madduck@debian.org> Released under terms
+# of the the Artistic Licence 2.0.
 #
 
 ifeq ($(shell tg summary -t),)
