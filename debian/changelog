@@ -7,6 +7,7 @@ topgit (0.5-1) unstable; urgency=low
     /usr/share/doc/topgit/HOWTO-tg2quilt for details; thanks to Stefano
     Zacchiroli for the idea that led to this (closes: #501991).
   * Update the README.source workflow to refer to HOWTO-tg2quilt.
+  * Add a NEWS file to make sure people get notified of this change.
 
  -- martin f. krafft <madduck@debian.org>  Fri, 26 Sep 2008 19:55:58 +0200
 
