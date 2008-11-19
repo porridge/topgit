@@ -5,7 +5,9 @@
 # GPLv2
 
 branch_prefix=t/
+single=
 ranges=
+basedep=
 
 
 ## Parse options
@@ -13,10 +15,14 @@ ranges=
 while [ -n "$1" ]; do
 	arg="$1"; shift
 	case "$arg" in
+	-d)
+		basedep="$1"; shift;;
 	-p)
 		branch_prefix="$1"; shift;;
+	-s)
+		single="$1"; shift;;
 	-*)
-		echo "Usage: tg [...] import [-p PREFIX] RANGE..." >&2
+		echo "Usage: tg [...] import [-d BASE_BRANCH] {[-p PREFIX] RANGE...|-s NAME COMMIT}" >&2
 		exit 1;;
 	*)
 		ranges="$ranges $arg";;
@@ -36,7 +42,11 @@ git update-index --ignore-submodules --refresh || exit
 get_commit_msg()
 {
 	commit="$1"
-	git log -1 --pretty=format:"From: %an <%ae>%n%n%s%n%n%b" "$commit"
+	headers=""
+	! header="$(git config topgit.to)" || headers="$headers%nTo: $header"
+	! header="$(git config topgit.cc)" || headers="$headers%nCc: $header"
+	! header="$(git config topgit.bcc)" || headers="$headers%nBcc: $header"
+	git log -1 --pretty=format:"From: %an <%ae>$headers%nSubject: %s%n%n%b" "$commit"
 }
 
 get_branch_name()
@@ -58,15 +68,24 @@ get_branch_name()
 process_commit()
 {
 	commit="$1"
-	branch_name=$(get_branch_name "$commit")
-	info "---- Importing $commit to $branch_prefix$branch_name"
-	tg create "$branch_prefix""$branch_name"
-	git cherry-pick --no-commit "$commit"
+	branch_name="$2"
+	info "---- Importing $commit to $branch_name"
+	tg create "$branch_name" $basedep
+	basedep=
 	get_commit_msg "$commit" > .topmsg
 	git add -f .topmsg .topdeps
+	if ! git cherry-pick --no-commit "$commit"; then
+		info "The commit will also finish the import of this patch."
+		exit 2
+	fi
 	git commit -C "$commit"
 	info "++++ Importing $commit finished"
 }
+
+if [ -n "$single" ]; then
+	process_commit $ranges "$single"
+	exit
+fi
 
 # nice arg verification stolen from git-format-patch.sh
 for revpair in $ranges
@@ -92,7 +111,7 @@ do
 			info "Merged already: $comment"
 			;;
 		*)
-			process_commit "$rev"
+			process_commit "$rev" "$branch_prefix$(get_branch_name "$rev")"
 			;;
 		esac
 	done

@@ -3,15 +3,46 @@
 # (c) Petr Baudis <pasky@suse.cz>  2008
 # GPLv2
 
+terse=
+graphviz=
+
 
 ## Parse options
 
-if [ -n "$1" ]; then
-	echo "Usage: tg [...] summary" >&2
-	exit 1
-fi
+while [ -n "$1" ]; do
+	arg="$1"; shift
+	case "$arg" in
+	-t)
+		terse=1;;
+	--graphviz)
+		graphviz=1;;
+	*)
+		echo "Usage: tg [...] summary [-t | --graphviz]" >&2
+		exit 1;;
+	esac
+done
 
 curname="$(git symbolic-ref HEAD | sed 's#^refs/\(heads\|top-bases\)/##')"
+
+if [ -n "$graphviz" ]; then
+	cat <<EOT
+# GraphViz output; pipe to:
+#   | dot -Tpng -o <ouput>
+# or
+#   | dot -Txlib
+
+digraph G {
+
+graph [
+  rankdir = "TB"
+  label="TopGit Layout\n\n\n"
+  fontsize = 14
+  labelloc=top
+  pad = "0.5,0.5"
+];
+
+EOT
+fi
 
 
 ## List branches
@@ -19,6 +50,17 @@ curname="$(git symbolic-ref HEAD | sed 's#^refs/\(heads\|top-bases\)/##')"
 git for-each-ref refs/top-bases |
 	while read rev type ref; do
 		name="${ref#refs/top-bases/}"
+		if [ -n "$terse" ]; then
+			echo "$name"
+			continue
+		fi
+		if [ -n "$graphviz" ]; then
+			git cat-file blob "$name:.topdeps" | while read dep; do
+				echo "\"$name\" -> \"$dep\";"
+			done
+			continue
+		fi
+
 		missing_deps=
 
 		current=' '
@@ -52,3 +94,7 @@ git for-each-ref refs/top-bases |
 		printf '%s\t%-31s\t%s\n' "$current$nonempty$remote$rem_update$deps_update$deps_missing$base_update" \
 			"$name" "$subject"
 	done
+
+if [ -n "$graphviz" ]; then
+	echo '}'
+fi
