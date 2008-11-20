@@ -27,6 +27,7 @@ install: build
 	$(MAKE) DESTDIR=$(CURDIR)/debian/topgit prefix=/usr install
 	rm -f $(wildcard $(CURDIR)/debian/topgit/usr/share/topgit/*.txt)
 	dh_install
+	install -m644 contrib/tg-completion.bash debian/topgit/etc/bash_completion.d/topgit
 
 
 binary-arch: build install

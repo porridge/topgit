@@ -2,6 +2,8 @@ topgit (0.5-2) unstable; urgency=low
 
   * Provide new tg2quilt target tg-cleanexport, which recreates debian/patches
     in one step.
+  * Actually install the bash completion script; thanks to Uwe Kleine-König
+    for noticing and providing a patch (closes: #499072).
 
  -- martin f. krafft <madduck@debian.org>  Wed, 19 Nov 2008 17:58:45 +0100
 
