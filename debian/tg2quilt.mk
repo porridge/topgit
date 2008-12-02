@@ -10,6 +10,10 @@
 #   include /usr/share/quilt/quilt.make
 #   -include /usr/share/topgit/tg2quilt.mk
 #
+# The leading dash is necessary for make not to die when the file is not
+# installed. TopGit is not a build dependency (and does not need to be), and
+# if the package is not installed, debian/rules can still be used normally.
+#
 # The snippet exports the following targets. These targets only perform the
 # describe behaviour when invoked from a TopGit repository (`tg summary -t`
 # returns a non-empty set); used outside, they simply output informational
