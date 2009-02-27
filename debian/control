@@ -11,6 +11,7 @@ Vcs-Browser: http://git.debian.org/?p=collab-maint/topgit.git
 Package: topgit
 Architecture: all
 Depends: git-core
+Suggests: quilt
 Description: a Git patch queue manager
  TopGit manages a patch queue using Git topic branches, one patch per
  branch. It allows for patch dependencies and can thus manage
