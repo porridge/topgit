@@ -68,8 +68,10 @@ else
 
 # We are in a TopGit branch, so let the fun begin.
 
-ifdef (PATCHES_DIR)
-	@echo 'W: The $PATCHES_DIR variable is deprecated, please use $QUILT_PATCH_DIR instead' >&2
+ifdef PATCHES_DIR
+	DUMMY := $(warning W: The $$PATCHES_DIR variable is deprecated, please use $$QUILT_PATCH_DIR instead.)
+	DUMMY := $(warning W: Sleeping for 10 seconds so you can read this!)
+	DUMMY := $(shell sleep 10)
 	QUILT_PATCH_DIR := $(PATCHES_DIR)
 endif
 
