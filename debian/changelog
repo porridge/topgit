@@ -1,3 +1,19 @@
+topgit (0.5-2) unstable; urgency=low
+
+  * Provide new tg2quilt target tg-cleanexport, which recreates debian/patches
+    in one step.
+  * Actually install the bash completion script; thanks to Uwe Kleine-König
+    for noticing and providing a patch (closes: #499072).
+  * Add a note to tg2quilt.mk's header explaining the need to soft-include
+    tg2quilt.mk, to avoid the topgit build-dependency.
+  * Suggest the git-email package (closes: #508079).
+  * Suggest the make and quilt packages.
+  * Fix GPL version in copyright file (closes: #514157).
+  * Deprecate tg2quilt.mk's $PATCHES_DIR variable and put a warning in place
+    to point people to $QUILT_PATCH_DIR instead.
+
+ -- martin f. krafft <madduck@debian.org>  Wed, 19 Nov 2008 17:58:45 +0100
+
 topgit (0.5-1) unstable; urgency=low
 
   * New upstream release (closes: #500273, #505266).

@@ -10,6 +10,10 @@
 #   include /usr/share/quilt/quilt.make
 #   -include /usr/share/topgit/tg2quilt.mk
 #
+# The leading dash is necessary for make not to die when the file is not
+# installed. TopGit is not a build dependency (and does not need to be), and
+# if the package is not installed, debian/rules can still be used normally.
+#
 # The snippet exports the following targets. These targets only perform the
 # describe behaviour when invoked from a TopGit repository (`tg summary -t`
 # returns a non-empty set); used outside, they simply output informational
@@ -34,6 +38,9 @@
 #                  removed. This means that edits to the series file are
 #                  likely to vanish.
 #
+#  tg-cleanexport: recreates the debian/patches directory from scratch, using
+#                  tg-rmdir and tg-export.
+#
 #   tg-forceclean: cleans the source tree, just like the debian/rules clean
 #                  target, and forcefully removes the debian/patches
 #                  directory in doing so. Yes, *force*-fully. WHAM!
@@ -42,7 +49,7 @@
 # that tg-export is automatically invoked before quilt gets a chance to patch
 # or unpatch the tree.
 #
-# The PATCHES_DIR variable can be set before including the file to override
+# The QUILT_PATCH_DIR variable can be set before including the file to override
 # the default debian/patches location.
 #
 # More information, particularly for people working on TopGit-using packages,
@@ -55,13 +62,18 @@
 ifeq ($(shell tg summary -t),)
   # This is not a TopGit branch, so just blubber a bit.
 
-  tg-export tg-clean tg-forceclean tg-rmdir:
+  tg-export tg-clean tg-forceclean tg-rmdir tg-cleanexport:
 	@echo "E: The $@ target only works from a TopGit repository." >&2
 else
 
 # We are in a TopGit branch, so let the fun begin.
 
-PATCHES_DIR ?= $(QUILT_PATCH_DIR)
+ifdef PATCHES_DIR
+	DUMMY := $(warning W: The $$PATCHES_DIR variable is deprecated, please use $$QUILT_PATCH_DIR instead.)
+	DUMMY := $(warning W: Sleeping for 10 seconds so you can read this!)
+	DUMMY := $(shell sleep 10)
+	QUILT_PATCH_DIR := $(PATCHES_DIR)
+endif
 
 # Hook tg-export into quilt's make(1) snippet such that it gets executed
 # before quilt patches or unpatches.
@@ -80,13 +92,13 @@ tg-export: __TG_COMMA := ,
 tg-export: __TG_EMPTY :=
 tg-export: __TG_SPACE := $(__TG_EMPTY) $(__TG_EMPTY)
 
-ifeq ($(wildcard $(PATCHES_DIR)/series),)
+ifeq ($(wildcard $(QUILT_PATCH_DIR)/series),)
   # The series file does not exist, so we proceed normally
 
   # tg-export will not work if the target dir already exists, so try to remove
   # it by calling tg-rmdir
   tg-export: tg-rmdir
-	tg export -b $(subst $(__TG_SPACE),$(__TG_COMMA),$(TG_BRANCHES)) --quilt $(PATCHES_DIR)
+	tg export -b $(subst $(__TG_SPACE),$(__TG_COMMA),$(TG_BRANCHES)) --quilt $(QUILT_PATCH_DIR)
 else
   # The series file already exists, so assume there is nothing to do.
   tg-export:
@@ -95,26 +107,26 @@ else
 	@echo "I: (you can ignore this message during a \`tg-clean\` run.)" >&2
 endif
 
-ifeq ($(wildcard $(PATCHES_DIR)),)
+ifeq ($(wildcard $(QUILT_PATCH_DIR)),)
   # No patch directory, so nothing to do:
   tg-rmdir:
 	@true
 
 else
   # There is a patch directory, let's try to clean it out:
-  tg-rmdir: __TG_FILES := $(shell find $(PATCHES_DIR) -type f -a -not -path \*/series \
+  tg-rmdir: __TG_FILES := $(shell find $(QUILT_PATCH_DIR) -type f -a -not -path \*/series \
                                     | xargs grep -l '^tg:')
   tg-rmdir:
 	# remove all files whose contents matches /^tg:/
 	test -n "$(__TG_FILES)" && rm $(__TG_FILES) || :
         # remove the series file
-	test -f $(PATCHES_DIR)/series && rm $(PATCHES_DIR)/series || :
+	test -f $(QUILT_PATCH_DIR)/series && rm $(QUILT_PATCH_DIR)/series || :
 	# try to remove directories
-	find $(PATCHES_DIR) -type d | tac | xargs rmdir 2>/dev/null || :
+	find $(QUILT_PATCH_DIR) -type d | tac | xargs rmdir 2>/dev/null || :
 	# fail if the directory could not be removed and still exists
-	@test ! -d $(PATCHES_DIR) || { \
-	  echo "E: $(PATCHES_DIR) contains non-TopGit-generated files:" >&2; \
-	  find $(PATCHES_DIR) -type f -printf 'E:   %P\n' >&2; \
+	@test ! -d $(QUILT_PATCH_DIR) || { \
+	  echo "E: $(QUILT_PATCH_DIR) contains non-TopGit-generated files:" >&2; \
+	  find $(QUILT_PATCH_DIR) -type f -printf 'E:   %P\n' >&2; \
 	  false; \
 	}
 endif
@@ -124,7 +136,10 @@ tg-clean: clean
 	$(MAKE) --no-print-directory -f debian/rules tg-rmdir
 
 tg-forceclean: clean
-	test -d $(PATCHES_DIR) && rm -r $(PATCHES_DIR) || :
+	test -d $(QUILT_PATCH_DIR) && rm -r $(QUILT_PATCH_DIR) || :
+
+tg-cleanexport: tg-rmdir
+	$(MAKE) --no-print-directory -f debian/rules tg-export
 
 endif
 
