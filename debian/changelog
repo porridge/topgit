@@ -8,6 +8,8 @@ topgit (0.5-2) unstable; urgency=low
     tg2quilt.mk, to avoid the topgit build-dependency.
   * Suggest the quilt package.
   * Fix GPL version in copyright file (closes: #514157).
+  * Deprecate tg2quilt.mk's $PATCHES_DIR variable and put a warning in place
+    to point people to $QUILT_PATCH_DIR instead.
 
  -- martin f. krafft <madduck@debian.org>  Wed, 19 Nov 2008 17:58:45 +0100
 
