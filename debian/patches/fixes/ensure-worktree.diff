@@ -1,0 +1,56 @@
+From: martin f. krafft <madduck@debian.org>
+Subject: [TopGit PATCH] Ensure we are inside a Git worktree
+
+Bert Wesarg suggests to check that we are not inside the .git directory before
+setting up topgit. Because git rev-parse --git-dir only works in the top .git
+dir, not deeper (i.e. inside .git/refs) and will always return "."
+
+This patch thus causes topgit to die early on when it's called from outside of
+a Git repository, or from underneath .git and outputs error messages
+accordingly.
+
+This temporarily makes it even more impossible to call tg --help, but I expect
+to have that fixed soon too.
+
+Signed-off-by: martin f. krafft <madduck@debian.org>
+
+---
+ tg.sh |   16 ++++++++++++++++
+ 1 files changed, 16 insertions(+), 0 deletions(-)
+
+diff --git a/tg.sh b/tg.sh
+index 3af2cd8..5765ead 100644
+--- a/tg.sh
++++ b/tg.sh
+@@ -18,6 +18,20 @@ die()
+ 	exit 1
+ }
+ 
++# Make sure we are in the worktree, not under .git; die otherwise
++ensure_git_repo_or_die()
++{
++	local is_inside_repo is_inside_git_dir
++	is_inside_repo=1
++	is_inside_git_dir=$(git rev-parse --is-inside-git-dir 2>/dev/null) ||
++		is_inside_repo=0
++
++	case "$is_inside_repo/$is_inside_git_dir" in
++	0*) die "Cannot run outside of a Git repository.";;
++	1/true) die "Cannot run from inside \`.git\` hierarchy, please switch to work-tree.";;
++	esac
++}
++
+ # cat_file "topic:file"
+ # Like `git cat-file blob $1`, but topics '(i)' and '(w)' means index and worktree
+ cat_file()
+@@ -324,6 +338,8 @@ setup_pager()
+ [ -d "@cmddir@" ] ||
+ 	die "No command directory: '@cmddir@'"
+ 
++ensure_git_repo_or_die
++
+ ## Initial setup
+ 
+ set -e
+-- 
+tg: (ad4ba21..) fixes/ensure-worktree (depends on: upstream)
