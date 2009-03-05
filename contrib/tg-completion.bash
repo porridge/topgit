@@ -359,6 +359,12 @@ _tg_patch ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 
 	case "$cur" in
+	-*)
+		__tgcomp "
+			-i
+			-w
+		"
+		;;
 	*)
 		__tgcomp "$(__tg_topics)"
 	esac
@@ -369,6 +375,11 @@ _tg_remote ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 
 	case "$cur" in
+	-*)
+		__tgcomp "
+			--populate
+		"
+		;;
 	*)
 		__tgcomp "$(__tg_remotes)"
 	esac
@@ -376,7 +387,15 @@ _tg_remote ()
 
 _tg_summary ()
 {
-	COMPREPLY=()
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+
+	case "$cur" in
+	*)
+		__tgcomp "
+			--graphviz
+			-t
+		"
+	esac
 }
 
 _tg_update ()

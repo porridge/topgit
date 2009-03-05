@@ -22,7 +22,7 @@ version control of patches (reordering of patches is not
 version-controlled at all). But there are several disadvantages -
 for one, these tools (especially StGIT) do not actually fit well
 with plain Git at all: it is basically impossible to take advantage
-of the index efectively when using StGIT. But more importantly,
+of the index effectively when using StGIT. But more importantly,
 these tools horribly fail in the face of distributed environment.
 
 TopGit has been designed around three main tenets:
@@ -45,7 +45,7 @@ them.
 
 As mentioned above, the main intended use-case for TopGit is tracking
 third-party patches, where each patch is effectively a single topic
-branch.  In order to flexibly accomodate even complex scenarios when
+branch.  In order to flexibly accommodate even complex scenarios when
 you track many patches where many are independent but some depend
 on others, TopGit ignores the ancient Quilt heritage of patch series
 and instead allows the patches to freely form graphs (DAGs just like
@@ -222,7 +222,7 @@ tg create
 
 	After `tg create`, you should insert the patch description
 	to the '.topmsg' file, which will already contain some
-	pre-filled bits. You can set topgit.to, topgit.cc and topgit.bcc
+	prefilled bits. You can set topgit.to, topgit.cc and topgit.bcc
 	configuration variables in order to have `tg create`
 	add these headers with given default values to '.topmsg'.
 
@@ -284,8 +284,9 @@ tg patch
 	tg patch will be able to automatically send the patches by mail
 	or save them to files. (TODO)
 
-	TODO: tg patch -i to base at index instead of branch,
-		-w for working tree
+	Options:
+	  -i		base patch generation on index instead of branch
+	  -w		base patch generation on working tree instead of branch
 
 tg mail
 ~~~~~~~
@@ -350,11 +351,12 @@ tg export
 	in the cleaned up history (corresponding basically exactly
 	to `tg patch` output for the topic branch).
 
-	The command has two posible outputs now - either a Git branch
-	with the collapsed history, or a quilt series in new directory.
+	The command has three possible outputs now - either a Git branch with
+	the collapsed history, a Git branch with a linearized history, or a
+	quilt series in new directory.
 
 	In case of producing collapsed history in new branch,
-	You can use this collapsed structure either for providing
+	you can use this collapsed structure either for providing
 	a pull source for upstream, or further linearization e.g.
 	for creation of a quilt series using git log:
 
@@ -376,6 +378,21 @@ tg export
 	origin/master - t/foo/blue -. merge - t/foo/red -.. merge - master
 	             `- t/bar/good <,-------------------'/
 	             `- t/baz      ---------------------'
+
+	In case of using the linearize mode:
+
+	master$ tg export --linearize for-linus
+
+	you get a linear history respecting the dependencies of your patches in
+	a new branch for-linus.  The result should be more or less the same as
+	using quilt mode and reimporting it into a Git branch.  (More or less
+	because the topologic order can usually be extended in more than one
+	way into a complete ordering and the two methods may choose different
+	one's.)  The result might be more appropriate for merging upstream as
+	it contains fewer merges.
+
+	Note that you might get conflicts during linearization because the
+	patches are reordered to get a linear history.
 
 	In case of the quilt mode,
 
@@ -409,15 +426,23 @@ tg export
 	a comma-separated explicit list of branches to export. This
 	mode of operation is currently not supported with collapse.
 
-	Usage: tg export ([--collapse] BRANCH | --quilt DIR)
+	In '--quilt' mode the patches are named like the originating topgit
+	branch.  So usually they end up in subdirectories of the output
+	directory.  With option '--flatten' the names are mangled such that
+	they end up directly in the output dir (i.e. slashed are substituted by
+	underscores).  With '--numbered' (which implies '--flatten') the patch
+	names get a number as prefix to allow getting the order without
+	consulting the series file, which eases sending out the patches.
+
+	Usage: tg export ([(--collapse | --linearize)] BRANCH | --quilt DIR)
 
 	TODO: Make stripping of non-essential headers configurable
 	TODO: Make stripping of [PATCH] and other prefixes configurable
 	TODO: --mbox option for other mode of operation
-	TODO: -n option to prevent exporting of empty patches
 	TODO: -a option to export all branches
-	TODO: For quilt exporting, use a temporary branch and remove it when
-	      done - this would allow producing conflict-less series
+	TODO: For quilt exporting, export the linearized history created in a
+	      temporary branch---this would allow producing conflict-less
+	      series
 
 tg import
 ~~~~~~~~~
@@ -455,7 +480,6 @@ tg update
 
 	TODO: tg update -a for updating all topic branches
 
-TODO: tg depend for adding/removing dependencies smoothly
 TODO: tg rename
 
 
@@ -485,7 +509,7 @@ whatever Cc headers you choose or the post-three-dashes message.
 When mailing out your patch, basically only few extra headers
 mail headers are inserted and the patch itself is appended.
 Thus, as your patches evolve, you can record nuances like whether
-the paricular patch should have To-list/Cc-maintainer or vice
+the particular patch should have To-list/Cc-maintainer or vice
 versa and similar nuances, if your project is into that.
 From is prefilled from your current GIT_AUTHOR_IDENT, other headers
 can be prefilled from various optional topgit.* config options.

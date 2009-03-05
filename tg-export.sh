@@ -7,6 +7,8 @@ name=
 branches=
 output=
 driver=collapse
+flatten=false
+numbered=false
 
 
 ## Parse options
@@ -16,12 +18,19 @@ while [ -n "$1" ]; do
 	case "$arg" in
 	-b)
 		branches="$1"; shift;;
+	--flatten)
+		flatten=true;;
+	--numbered)
+		flatten=true;
+		numbered=true;;
 	--quilt)
 		driver=quilt;;
 	--collapse)
 		driver=collapse;;
+	--linearize)
+		driver=linearize;;
 	-*)
-		echo "Usage: tg [...] export ([--collapse] NEWBRANCH | [-b BRANCH1,BRANCH2...] --quilt DIRECTORY)" >&2
+		echo "Usage: tg [...] export ([--collapse] NEWBRANCH | [-b BRANCH1,BRANCH2...] --quilt DIRECTORY | --linearize NEWBRANCH)" >&2
 		exit 1;;
 	*)
 		[ -z "$output" ] || die "output already specified ($output)"
@@ -33,6 +42,12 @@ done
 
 [ -z "$branches" -o "$driver" = "quilt" ] ||
 	die "-b works only with the quilt driver"
+
+[ "$driver" = "quilt" ] || ! "$numbered" ||
+	die "--numbered works only with the quilt driver";
+
+[ "$driver" = "quilt" ] || ! "$flatten" ||
+	die "--flatten works only with the quilt driver"
 
 if [ -z "$branches" ]; then
 	# this check is only needed when no branches have been passed
@@ -58,14 +73,11 @@ pretty_tree()
 	 git write-tree)
 }
 
-# collapsed_commit NAME
-# Produce a collapsed commit of branch NAME.
-collapsed_commit()
+create_tg_commit()
 {
 	name="$1"
-
-	rm -f "$playground/^pre" "$playground/^post"
-	>"$playground/^body"
+	tree="$2"
+	parent="$3"
 
 	# Get commit message and authorship information
 	git cat-file blob "$name:.topmsg" | git mailinfo "$playground/^msg" /dev/null > "$playground/^info"
@@ -79,6 +91,20 @@ collapsed_commit()
 	test -n "$GIT_AUTHOR_EMAIL" && export GIT_AUTHOR_EMAIL
 	test -n "$GIT_AUTHOR_DATE" && export GIT_AUTHOR_DATE
 
+	(printf '%s\n\n' "$SUBJECT"; cat "$playground/^msg") |
+	git stripspace |
+	git commit-tree "$tree" -p "$parent"
+}
+
+# collapsed_commit NAME
+# Produce a collapsed commit of branch NAME.
+collapsed_commit()
+{
+	name="$1"
+
+	rm -f "$playground/^pre" "$playground/^post"
+	>"$playground/^body"
+
 	# Determine parent
 	parent="$(cut -f 1 "$playground/$name^parents")"
 	if [ "$(cat "$playground/$name^parents" | wc -l)" -gt 1 ]; then
@@ -91,9 +117,11 @@ collapsed_commit()
 			$(for p in $parent; do echo -p $p; done))"
 	fi
 
-	(printf '%s\n\n' "$SUBJECT"; cat "$playground/^msg") |
-	git stripspace |
-	git commit-tree "$(pretty_tree "$name")" -p "$parent"
+	if branch_empty "$name"; then
+		echo "$parent";
+	else
+		create_tg_commit "$name" "$(pretty_tree $name)" "$parent"
+	fi;
 
 	echo "$name" >>"$playground/^ticker"
 }
@@ -134,22 +162,95 @@ quilt()
 		return
 	fi
 
-	filename="$output/$_dep.diff"
-	if [ -e "$filename" ]; then
+	if "$flatten"; then
+		bn="$(echo "$_dep.diff" | sed -e 's#_#__#g' -e 's#/#_#g')";
+		dn="";
+	else
+		bn="$(basename "$_dep.diff")";
+		dn="$(dirname "$_dep.diff")/";
+		if [ "x$dn" = "x./" ]; then
+			dn="";
+		fi;
+	fi;
+
+	if [ -e "$playground/$_dep" ]; then
 		# We've already seen this dep
 		return
 	fi
 
-	echo "Exporting $_dep"
-	mkdir -p "$(dirname "$filename")"
-	$tg patch "$_dep" >"$filename"
-	echo "$_dep.diff -p1" >>"$output/series"
+	mkdir -p "$playground/$(dirname "$_dep")";
+	touch "$playground/$_dep";
+
+	if branch_empty "$_dep"; then
+		echo "Skip empty patch $_dep";
+	else
+		if "$numbered"; then
+			number="$(printf "%04u" $(($(cat "$playground/^number" 2>/dev/null) + 1)))";
+			bn="$number-$bn";
+			echo "$number" >"$playground/^number";
+		fi;
+
+		echo "Exporting $_dep"
+		mkdir -p "$output/$dn";
+		$tg patch "$_dep" >"$output/$dn$bn"
+		echo "$dn$bn -p1" >>"$output/series"
+	fi
 }
 
+linearize()
+{
+	if test ! -f "$playground/^BASE"; then
+		head="$(git rev-parse --verify "$_dep")"
+		echo "$head" > "$playground/^BASE"
+		git checkout -q "$head"
+		return;
+	fi;
+
+	head=$(git rev-parse --verify HEAD)
+
+	if [ -z "$_dep_is_tgish" ]; then
+		# merge in $_dep unless already included
+		rev="$(git rev-parse --verify "$_dep")";
+		common="$(git merge-base --all HEAD "$_dep")";
+		if test "$rev" = "$common"; then
+			# already included, just skip
+			:;
+		else
+			git merge -s recursive "$_dep";
+			retmerge="$?";
+			if test "x$retmerge" != "x0"; then
+				echo fix up the merge, commit and then exit;
+				#todo error handling
+				sh -i
+			fi;
+		fi;
+	else
+		git merge-recursive "$(pretty_tree "refs/top-bases/$_dep")" -- HEAD "$(pretty_tree "refs/heads/$_dep")";
+		retmerge="$?";
+
+		if test "x$retmerge" != "x0"; then
+			echo "fix up the merge and update the index.  Don't commit!"
+			#todo error handling
+			sh -i
+		fi
+
+		result_tree=$(git write-tree)
+		# testing branch_empty might not always give the right answer.
+		# It can happen that the patch is non-empty but still after
+		# linearizing there is no change.  So compare the trees.
+		if test "x$result_tree" = "x$(git rev-parse $head^{tree})"; then
+			echo "skip empty commit $_dep";
+		else
+			newcommit=$(create_tg_commit "$_dep" "$result_tree" HEAD)
+			git update-ref HEAD $newcommit $head
+			echo "exported commit $_dep";
+		fi
+	fi
+}
 
 ## Machinery
 
-if [ "$driver" = "collapse" ]; then
+if [ "$driver" = "collapse" ] || [ "$driver" = "linearize" ]; then
 	[ -n "$output" ] ||
 		die "no target branch specified"
 	! ref_exists "$output"  ||
@@ -198,4 +299,17 @@ if [ "$driver" = "collapse" ]; then
 elif [ "$driver" = "quilt" ]; then
 	depcount="$(cat "$output/series" | wc -l)"
 	echo "Exported topic branch $name (total $depcount topics) to directory $output"
+
+elif [ "$driver" = "linearize" ]; then
+	git checkout -q -b $output
+
+	echo $name
+	if test $(git rev-parse "$(pretty_tree $name)^{tree}") != $(git rev-parse "HEAD^{tree}"); then
+		echo "Warning: Exported result doesn't match";
+		echo "tg-head=$(git rev-parse "$name"), exported=$(git rev-parse "HEAD")";
+		#git diff $head HEAD;
+	fi;
+
 fi
+
+# vim:noet
