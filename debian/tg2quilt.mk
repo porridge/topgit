@@ -122,7 +122,7 @@ else
         # remove the series file
 	test -f $(QUILT_PATCH_DIR)/series && rm $(QUILT_PATCH_DIR)/series || :
 	# try to remove directories
-	find $(QUILT_PATCH_DIR) -type d | tac | xargs rmdir 2>/dev/null || :
+	find $(QUILT_PATCH_DIR) -depth -type d -empty -execdir rmdir {} +
 	# fail if the directory could not be removed and still exists
 	@test ! -d $(QUILT_PATCH_DIR) || { \
 	  echo "E: $(QUILT_PATCH_DIR) contains non-TopGit-generated files:" >&2; \
