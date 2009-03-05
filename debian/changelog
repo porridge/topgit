@@ -12,6 +12,8 @@ topgit (0.7-1) unstable; urgency=low
   * Fix GPL version in copyright file (closes: #514157).
   * Deprecate tg2quilt.mk's $PATCHES_DIR variable and put a warning in place
     to point people to $QUILT_PATCH_DIR instead.
+  * change maintainer to pkg-topgit@teams.debian.net, add Uwe Kleine-König to
+    uploaders.
 
   [ Uwe Kleine-König ]
   * new upstream release topgit-0.7
