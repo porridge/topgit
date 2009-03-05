@@ -3,6 +3,7 @@
 # (c) Petr Baudis <pasky@suse.cz>  2008
 # GPLv2
 
+TG_VERSION=0.7
 
 ## Auxiliary functions
 
@@ -15,6 +16,27 @@ die()
 {
 	info "fatal: $*"
 	exit 1
+}
+
+# cat_file "topic:file"
+# Like `git cat-file blob $1`, but topics '(i)' and '(w)' means index and worktree
+cat_file()
+{
+	arg="$1"
+	case "$arg" in
+	'(w):'*)
+		arg=$(echo "$arg" | tail --bytes=+5)
+		cat "$arg"
+		return
+		;;
+	'(i):'*)
+		# ':file' means cat from index
+		arg=$(echo "$arg" | tail --bytes=+5)
+		git cat-file blob ":$arg"
+		;;
+	*)
+		git cat-file blob "$arg"
+	esac
 }
 
 # setup_hook NAME
@@ -63,8 +85,8 @@ measure_branch()
 	_bname="$1"; _base="$2"
 	[ -n "$_base" ] || _base="refs/top-bases/$_bname"
 	# The caller should've verified $name is valid
-	_commits="$(git rev-list "$_bname" ^"$_base" | wc -l)"
-	_nmcommits="$(git rev-list --no-merges "$_bname" ^"$_base" | wc -l)"
+	_commits="$(git rev-list "$_bname" ^"$_base" -- | wc -l)"
+	_nmcommits="$(git rev-list --no-merges "$_bname" ^"$_base" -- | wc -l)"
 	if [ $_commits -gt 1 ]; then
 		_suffix="commits"
 	else
@@ -77,7 +99,7 @@ measure_branch()
 # Whether B1 is a superset of B2.
 branch_contains()
 {
-	[ -z "$(git rev-list ^"$1" "$2" --)" ]
+	[ -z "$(git rev-list --max-count=1 ^"$1" "$2" --)" ]
 }
 
 # ref_exists REF
@@ -92,6 +114,16 @@ ref_exists()
 has_remote()
 {
 	[ -n "$base_remote" ] && ref_exists "remotes/$base_remote/$1"
+}
+
+branch_annihilated()
+{
+	_name="$1";
+
+	# use the merge base in case the base is ahead.
+	mb="$(git merge-base "refs/top-bases/$_name" "$_name")";
+
+	test "$(git rev-parse "$mb^{tree}")" = "$(git rev-parse "$_name^{tree}")";
 }
 
 # recurse_deps CMD NAME [BRANCHPATH...]
@@ -116,7 +148,12 @@ recurse_deps()
 	if has_remote "top-bases/$_name"; then
 		echo "refs/remotes/$base_remote/top-bases/$_name" >>"$_depsfile"
 	fi
-	git cat-file blob "$_name:.topdeps" >>"$_depsfile"
+
+	# if the branch was annihilated, there exists no .topdeps file
+	if ! branch_annihilated "$_name"; then
+		#TODO: handle nonexisting .topdeps?
+		git cat-file blob "$_name:.topdeps" >>"$_depsfile";
+	fi;
 
 	_ret=0
 	while read _dep; do
@@ -209,6 +246,12 @@ switch_to_base()
 do_help()
 {
 	if [ -z "$1" ] ; then
+		# This is currently invoked in all kinds of circumstances,
+		# including when the user made a usage error. Should we end up
+		# providing more than a short help message, then we should
+		# differentiate.
+		# Petr's comment: http://marc.info/?l=git&m=122718711327376&w=2
+
 		## Build available commands list for help output
 
 		cmds=
@@ -222,7 +265,7 @@ do_help()
 			sep="|"
 		done
 
-		echo "TopGit v0.5 - A different patch queue manager"
+		echo "TopGit v$TG_VERSION - A different patch queue manager"
 		echo "Usage: tg [-r REMOTE] ($cmds|help) ..."
 	elif [ -r "@cmddir@"/tg-$1 ] ; then
 		@cmddir@/tg-$1 -h || :
@@ -232,9 +275,54 @@ do_help()
 		fi
 	else
 		echo "`basename $0`: no help for $1" 1>&2
+		do_help
+		exit 1
 	fi
 }
 
+## Pager stuff
+
+# isatty FD
+isatty()
+{
+	test -t $1
+}
+
+# setup_pager
+# Spawn pager process and redirect the rest of our output to it
+setup_pager()
+{
+	isatty 1 || return 0
+
+	# TG_PAGER = GIT_PAGER | PAGER | less
+	# NOTE: GIT_PAGER='' is significant
+	TG_PAGER=${GIT_PAGER-${PAGER-less}}
+
+	[ -z "$TG_PAGER"  -o  "$TG_PAGER" = "cat" ]  && return 0
+
+
+	# now spawn pager
+	export LESS=${LESS:-FRSX}	# as in pager.c:pager_preexec()
+
+	_pager_fifo_dir="$(mktemp -t -d tg-pager-fifo.XXXXXX)"
+	_pager_fifo="$_pager_fifo_dir/0"
+	mkfifo -m 600 "$_pager_fifo"
+
+	"$TG_PAGER" < "$_pager_fifo" &
+	exec > "$_pager_fifo"		# dup2(pager_fifo.in, 1)
+
+	# this is needed so e.g. `git diff` will still colorize it's output if
+	# requested in ~/.gitconfig with color.diff=auto
+	export GIT_PAGER_IN_USE=1
+
+	# atexit(close(1); wait pager)
+	trap "exec >&-; rm \"$_pager_fifo\"; rmdir \"$_pager_fifo_dir\"; wait" EXIT
+}
+
+## Startup
+
+[ -d "@cmddir@" ] ||
+	die "No command directory: '@cmddir@'"
 
 ## Initial setup
 
@@ -249,9 +337,6 @@ tg="tg"
 setup_ours
 setup_hook "pre-commit"
 
-[ -d "@cmddir@" ] ||
-	die "No command directory: '@cmddir@'"
-
 ## Dispatch
 
 # We were sourced from another script for our utility functions;
@@ -259,25 +344,34 @@ setup_hook "pre-commit"
 [ -z "$tg__include" ] || return 0
 
 if [ "$1" = "-r" ]; then
-	shift; base_remote="$1"; shift
+	shift
+	if [ -z "$1" ]; then
+		echo "Option -r requires an argument." >&2
+		do_help
+		exit 1
+	fi
+	base_remote="$1"; shift
 	tg="$tg -r $base_remote"
 fi
 
 cmd="$1"
-[ -n "$cmd" ] || die "He took a duck in the face at two hundred and fifty knots"
+[ -n "$cmd" ] || { do_help; exit 1; }
 shift
 
 case "$cmd" in
 help|--help|-h)
 	do_help "$1"
-	exit 1;;
+	exit 0;;
 --hooks-path)
 	# Internal command
 	echo "@hooksdir@";;
 *)
 	[ -r "@cmddir@"/tg-$cmd ] || {
 		echo "Unknown subcommand: $cmd" >&2
+		do_help
 		exit 1
 	}
 	. "@cmddir@"/tg-$cmd;;
 esac
+
+# vim:noet

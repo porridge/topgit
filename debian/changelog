@@ -1,5 +1,6 @@
-topgit (0.5-2) unstable; urgency=low
+topgit (0.7-1) unstable; urgency=low
 
+  [ martin f. krafft ]
   * Provide new tg2quilt target tg-cleanexport, which recreates debian/patches
     in one step.
   * Actually install the bash completion script; thanks to Uwe Kleine-König
@@ -11,8 +12,15 @@ topgit (0.5-2) unstable; urgency=low
   * Fix GPL version in copyright file (closes: #514157).
   * Deprecate tg2quilt.mk's $PATCHES_DIR variable and put a warning in place
     to point people to $QUILT_PATCH_DIR instead.
+  * change maintainer to pkg-topgit@teams.debian.net, add Uwe Kleine-König to
+    uploaders.
 
- -- martin f. krafft <madduck@debian.org>  Wed, 19 Nov 2008 17:58:45 +0100
+  [ Uwe Kleine-König ]
+  * new upstream release topgit-0.7
+    - fixes Resumed create ignores branches contained in resolution
+      (Closes: #513018)
+
+ -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Thu, 05 Mar 2009 12:09:31 +0100
 
 topgit (0.5-1) unstable; urgency=low
 
