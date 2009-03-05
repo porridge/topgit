@@ -1,7 +1,8 @@
 Source: topgit
 Section: devel
 Priority: optional
-Maintainer: martin f. krafft <madduck@debian.org>
+Maintainer: Debian TopGit maintainers <pkg-topgit@teams.debian.net>
+Uploaders: martin f. krafft <madduck@debian.org>, Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
 Build-Depends: debhelper (>= 7), quilt
 Standards-Version: 3.8.0
 Homepage: http://repo.or.cz/w/topgit.git
