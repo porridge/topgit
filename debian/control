@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Debian TopGit maintainers <pkg-topgit@teams.debian.net>
 Uploaders: martin f. krafft <madduck@debian.org>, Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
 Build-Depends: debhelper (>= 6), quilt
-Standards-Version: 3.8.0
+Standards-Version: 3.8.1
 Homepage: http://repo.or.cz/w/topgit.git
 Vcs-Git: git://git.debian.org/git/collab-maint/topgit.git
 Vcs-Browser: http://git.debian.org/?p=collab-maint/topgit.git

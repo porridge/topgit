@@ -1,3 +1,9 @@
+topgit (0.7-2) unstable; urgency=low
+
+  * Update Debian policy version (no changes needed).
+
+ -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Mon, 16 Mar 2009 08:52:08 +0100
+
 topgit (0.7-1) unstable; urgency=low
 
   [ martin f. krafft ]
