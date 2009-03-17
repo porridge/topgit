@@ -123,7 +123,7 @@ this procedure:
 
 7. Building an upstream tarball
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you are using pristine-tar, the follopwing can be used to commit an
+If you are using pristine-tar, the following can be used to commit an
 upstream tarball to the repository. It makes sense to rename it according to
 the Debian-standard package_version.orig.tar.gz convention first.
 
