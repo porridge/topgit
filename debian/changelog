@@ -1,6 +1,11 @@
 topgit (0.7-2) unstable; urgency=low
 
+  [ Uwe Kleine-König ]
   * Update Debian policy version (no changes needed).
+
+  [ martin f. krafft ]
+  * Provide default values for variables used in tg2quilt.mk; thanks Frédéric
+    Brière (closes: #526392).
 
  -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Mon, 16 Mar 2009 08:52:08 +0100
 
