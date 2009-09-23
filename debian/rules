@@ -3,7 +3,7 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-TG_BRANCHES="fixes/ensure-worktree debian/locations"
+TG_BRANCHES="debian/locations"
 
 include /usr/share/quilt/quilt.make
 include debian/tg2quilt.mk
