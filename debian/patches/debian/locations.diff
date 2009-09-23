@@ -43,12 +43,12 @@ index 3ce39a5..31cc98e 100644
  clean::
  	rm -f tg $(commands_out) $(hooks_out) $(help_out)
 diff --git a/tg.sh b/tg.sh
-index 3af2cd8..9a0fabd 100644
+index 1f259e3..a27d5ce 100644
 --- a/tg.sh
 +++ b/tg.sh
-@@ -270,8 +270,8 @@ do_help()
- 	elif [ -r "@cmddir@"/tg-$1 ] ; then
- 		@cmddir@/tg-$1 -h || :
+@@ -272,8 +272,8 @@ do_help()
+ 		setup_pager
+ 		@cmddir@/tg-$1 -h 2>&1 || :
  		echo
 -		if [ -r "@sharedir@/tg-$1.txt" ] ; then
 -			cat "@sharedir@/tg-$1.txt"
@@ -58,4 +58,4 @@ index 3af2cd8..9a0fabd 100644
  	else
  		echo "`basename $0`: no help for $1" 1>&2
 -- 
-tg: (0c676b4..) debian/locations (depends on: master)
+tg: (11367ce..) debian/locations (depends on: master)
