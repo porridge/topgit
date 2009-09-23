@@ -75,6 +75,9 @@ ifdef PATCHES_DIR
 	QUILT_PATCH_DIR := $(PATCHES_DIR)
 endif
 
+QUILT_PATCH_DIR ?= debian/patches
+QUILT_STAMPFN ?= patch
+
 # Hook tg-export into quilt's make(1) snippet such that it gets executed
 # before quilt patches or unpatches.
 $(QUILT_STAMPFN): tg-export

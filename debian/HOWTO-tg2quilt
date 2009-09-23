@@ -123,7 +123,7 @@ this procedure:
 
 7. Building an upstream tarball
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you are using pristine-tar, the follopwing can be used to commit an
+If you are using pristine-tar, the following can be used to commit an
 upstream tarball to the repository. It makes sense to rename it according to
 the Debian-standard package_version.orig.tar.gz convention first.
 
@@ -132,13 +132,10 @@ the Debian-standard package_version.orig.tar.gz convention first.
 If upstream does not provide tarballs, you can create the orig.tar.gz file and
 commit is as follows:
 
-1. git checkout topgit-$VERSION
-2. git archive --prefix=$(git describe HEAD)/ --verbose HEAD \
-    | gzip -9 > ../$(git describe HEAD | sed s,-,_,).orig.tar.gz
-3. pristine-tar commit ../$(git describe HEAD | sed s,-,_,).orig.tar.gz \
-    HEAD
-4. git checkout master
-
+1. upstream_tag="topgit-$VERSION"
+2. git archive --prefix="$upstream_tag/" "$upstream_tag" |
+	gzip -9 > ../"${upstream_tag//-/_}.orig.tar.gz"
+3. pristine-tar commit ../"${upstream_tag//-/_}.orig.tar.gz" "$upstream_tag"
 
 
 All comments and suggestions are welcome, especially those pertaining to
