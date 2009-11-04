@@ -1,3 +1,9 @@
+topgit (0.8-2) UNRELEASED; urgency=low
+
+  * change section to vcs
+
+ -- Uwe Kleine-König <u.kleine-koenig@pengutronix.de>  Wed, 04 Nov 2009 21:40:13 +0100
+
 topgit (0.8-1) unstable; urgency=low
 
   [ Uwe Kleine-König ]

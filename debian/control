@@ -1,5 +1,5 @@
 Source: topgit
-Section: devel
+Section: vcs
 Priority: optional
 Maintainer: Debian TopGit maintainers <pkg-topgit@teams.debian.net>
 Uploaders: martin f. krafft <madduck@debian.org>, Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
