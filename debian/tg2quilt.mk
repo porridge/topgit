@@ -124,6 +124,8 @@ else
 	rm -f $(__TG_FILES)
 	# remove the series file
 	rm -f $(QUILT_PATCH_DIR)/series
+	# remove dpkg v3 file
+	rm -f $(QUILT_PATCH_DIR)/.dpkg-source-applied
 	# try to remove directories
 	find $(QUILT_PATCH_DIR) -depth -type d -empty -execdir rmdir {} +
 	# fail if the directory could not be removed and still exists
