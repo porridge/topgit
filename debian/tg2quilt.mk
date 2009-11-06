@@ -121,9 +121,9 @@ else
                                     | xargs grep -l '^tg:')
   tg-rmdir:
 	# remove all files whose contents matches /^tg:/
-	test -n "$(__TG_FILES)" && rm $(__TG_FILES) || :
-        # remove the series file
-	test -f $(QUILT_PATCH_DIR)/series && rm $(QUILT_PATCH_DIR)/series || :
+	rm -f $(__TG_FILES)
+	# remove the series file
+	rm -f $(QUILT_PATCH_DIR)/series
 	# try to remove directories
 	find $(QUILT_PATCH_DIR) -depth -type d -empty -execdir rmdir {} +
 	# fail if the directory could not be removed and still exists
