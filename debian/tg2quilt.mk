@@ -161,7 +161,7 @@ tg-cleanexport: tg-rmdir
 
 endif
 
-.PHONY: tg-clean tg-export tg-forceclean tg-rmdir
+.PHONY: tg-clean tg-export tg-forceclean tg-rmdir tg-cleanexport
 
 # vim:ft=make:ts=8:noet
 # -*- Makefile -*-, you silly Emacs! (shamelessly stolen from quilt)
