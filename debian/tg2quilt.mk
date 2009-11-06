@@ -122,7 +122,7 @@ else
   tg-rmdir: __TG_FILES := $(shell find $(QUILT_PATCH_DIR) -type f -a -not -path \*/series \
                                     | xargs grep -l '^tg:')
   tg-rmdir:
-	QUILT_PATCHES=$(QUILT_PATCH_DIR) quilt pop -a
+	QUILT_PATCHES=$(QUILT_PATCH_DIR) quilt pop -a 2>/dev/null || :
 	@if quilt applied >/dev/null 2>&1; then \
 	  echo "E: there are applied quilt patches." >&2; \
 	  echo "E: please unapply (pop) all patches and try again." >&2; \
