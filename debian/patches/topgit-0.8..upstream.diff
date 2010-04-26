@@ -1,0 +1,158 @@
+diff --git a/README b/README
+index 495c70b..c418ff4 100644
+--- a/README
++++ b/README
+@@ -244,6 +244,10 @@ tg delete
+ 	only empty branch (base == head); use '-f' to remove
+ 	non-empty branch.
+ 
++	The '-f' option is also useful to force removal of a branch's base, if
++	you used 'git branch -D B' to remove the branch B, and then certain
++	TopGit commands complain, because the base of branch B is still there.
++
+ 	Currently, this command will _NOT_ remove the branch from
+ 	the dependency list in other branches. You need to take
+ 	care of this _manually_. This is even more complicated
+@@ -304,6 +308,13 @@ tg mail
+ 	The '-r' parameter with msgid can be used to generate in-reply-to
+ 	and reference headers to an earlier mail.
+ 
++	Note: be careful when using this command.  It easily sends out several
++	mails.  You might want to run
++
++		git config sendemail.confirm always
++
++	to let `git send-email` ask for confirmation before sending any mail.
++
+ 	TODO: 'tg mail patchfile' to mail an already exported patch
+ 	TODO: mailing patch series
+ 	TODO: specifying additional options and addresses on command
+diff --git a/tg-delete.sh b/tg-delete.sh
+index ab121c2..e1eea17 100644
+--- a/tg-delete.sh
++++ b/tg-delete.sh
+@@ -3,7 +3,7 @@
+ # (c) Petr Baudis <pasky@suse.cz>  2008
+ # GPLv2
+ 
+-force= # Whether to delete non-empty branch
++force= # Whether to delete non-empty branch, or branch where only the base is left.
+ name=
+ 
+ 
+@@ -28,21 +28,22 @@ done
+ 
+ [ -n "$name" ] || die "no branch name specified"
+ branchrev="$(git rev-parse --verify "$name" 2>/dev/null)" ||
+-	die "invalid branch name: $name"
++	if [ -n "$force" ]; then
++		info "invalid branch name: $name; assuming it has been deleted already"
++	else
++		die "invalid branch name: $name"
++	fi
+ baserev="$(git rev-parse --verify "refs/top-bases/$name" 2>/dev/null)" ||
+ 	die "not a TopGit topic branch: $name"
+ ! git symbolic-ref HEAD >/dev/null || [ "$(git symbolic-ref HEAD)" != "refs/heads/$name" ] ||
+ 	die "cannot delete your current branch"
+ 
+-nonempty=
+-branch_empty "$name" || nonempty=1
+-
+-[ -z "$nonempty" ] || [ -n "$force" ] || die "branch is non-empty: $name"
++[ -z "$force" ] && { branch_empty "$name" || die "branch is non-empty: $name"; }
+ 
+ 
+ ## Wipe out
+ 
+ git update-ref -d "refs/top-bases/$name" "$baserev"
+-git update-ref -d "refs/heads/$name" "$branchrev"
++[ -z "$branchrev" ] || git update-ref -d "refs/heads/$name" "$branchrev"
+ 
+ # vim:noet
+diff --git a/tg-mail.sh b/tg-mail.sh
+index f5c0cf4..8167ade 100644
+--- a/tg-mail.sh
++++ b/tg-mail.sh
+@@ -30,7 +30,7 @@ base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" 2>/dev/null)"
+ 	die "not a TopGit-controlled branch"
+ 
+ if [ -n "$in_reply_to" ]; then
+-	send_email_args="$send_email_args --in-reply-to=$in_reply_to"
++	send_email_args="$send_email_args --in-reply-to='$in_reply_to'"
+ fi
+ 
+ 
+@@ -38,7 +38,7 @@ patchfile="$(mktemp -t tg-mail.XXXXXX)"
+ 
+ $tg patch "$name" >"$patchfile"
+ 
+-header="$(sed -e '/^$/,$d' "$patchfile")"
++header="$(sed -e '/^$/,$d' -e "s,','\\\\'',g" "$patchfile")"
+ 
+ 
+ 
+diff --git a/tg-patch.sh b/tg-patch.sh
+index d701c54..7bafdfe 100644
+--- a/tg-patch.sh
++++ b/tg-patch.sh
+@@ -56,7 +56,8 @@ git diff --name-only $diff_opts "$base_rev" ${diff_committed_only:+"$name"} -- |
+ 	fgrep -vx ".topdeps" |
+ 	fgrep -vx ".topmsg" >"$git_is_stupid" || : # fgrep likes to fail randomly?
+ if [ -s "$git_is_stupid" ]; then
+-	cat "$git_is_stupid" | xargs git diff --patch-with-stat $diff_opts "$base_rev" ${diff_committed_only:+"$name"} --
++	cd "$root_dir"
++	cat "$git_is_stupid" | xargs git diff -a --patch-with-stat $diff_opts "$base_rev" ${diff_committed_only:+"$name"} --
+ else
+ 	echo "No changes."
+ fi
+diff --git a/tg-push.sh b/tg-push.sh
+index cd208a0..199d738 100644
+--- a/tg-push.sh
++++ b/tg-push.sh
+@@ -53,6 +53,10 @@ push_branch()
+ 	# if so desired omit non tgish deps
+ 	$tgish_deps_only && [ -z "$_dep_is_tgish" ] && return 0
+ 
++	# filter out plain SHA1s.  These don't need to be pushed explicitly as
++	# the patches that depend on the sha1 have it already in their ancestry.
++	is_sha1 "$_dep" && return 0
++
+ 	echo "$_dep" >> "$_listfile"
+ 	[ -z "$_dep_is_tgish" ] ||
+ 		echo "top-bases/$_dep" >> "$_listfile"
+diff --git a/tg.sh b/tg.sh
+index 1f259e3..9d08d63 100644
+--- a/tg.sh
++++ b/tg.sh
+@@ -54,6 +54,8 @@ setup_hook()
+ 	else
+ 		hook_call="exec $hook_call"
+ 	fi
++	# Don't call hook if tg is not installed
++	hook_call="if which \"$tg\" > /dev/null; then $hook_call; fi"
+ 	# Insert call into the hook
+ 	{
+ 		echo "#!/bin/sh"
+@@ -126,6 +128,13 @@ branch_annihilated()
+ 	test "$(git rev-parse "$mb^{tree}")" = "$(git rev-parse "$_name^{tree}")";
+ }
+ 
++# is_sha1 REF
++# Whether REF is a SHA1 (compared to a symbolic name).
++is_sha1()
++{
++	[ "$(git rev-parse "$1")" = "$1" ]
++}
++
+ # recurse_deps CMD NAME [BRANCHPATH...]
+ # Recursively eval CMD on all dependencies of NAME.
+ # CMD can refer to $_name for queried branch name,
+@@ -304,7 +313,7 @@ setup_pager()
+ 
+ 
+ 	# now spawn pager
+-	export LESS=${LESS:-FRSX}	# as in pager.c:pager_preexec()
++	export LESS="${LESS:-FRSX}"	# as in pager.c:pager_preexec()
+ 
+ 	_pager_fifo_dir="$(mktemp -t -d tg-pager-fifo.XXXXXX)"
+ 	_pager_fifo="$_pager_fifo_dir/0"

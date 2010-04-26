@@ -1,1 +1,2 @@
-debian/locations.diff -p1
+topgit-0.8..upstream.diff
+debian/locations.diff
