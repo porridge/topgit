@@ -31,7 +31,9 @@
 #                  target, and invokes tg-rmdir
 #
 #        tg-rmdir: tries to remove debian/patches, but only if there are no
-#                  non-TopGit files under the directory.
+#                  non-TopGit files under the directory, the repository has
+#                  no uncommitted changes, and there are not quilt patches
+#                  applied.
 #                    The heuristic is to find files that do not contain a line
 #                  matchines /^tg:/, minus the series file. If any such files
 #                  are found, an error occurs. Otherwise, the directory is
@@ -120,10 +122,23 @@ else
   tg-rmdir: __TG_FILES := $(shell find $(QUILT_PATCH_DIR) -type f -a -not -path \*/series \
                                     | xargs grep -l '^tg:')
   tg-rmdir:
+	QUILT_PATCHES=$(QUILT_PATCH_DIR) quilt pop -a 2>/dev/null || :
+	@if quilt applied >/dev/null 2>&1; then \
+	  echo "E: there are applied quilt patches." >&2; \
+	  echo "E: please unapply (pop) all patches and try again." >&2; \
+	  false; \
+	fi
+	@if git status -am. >/dev/null; then \
+	  echo "E: there are uncommitted changes in the working directory." >&2; \
+	  echo "E: please commit or revert all changes." >&2; \
+	  false; \
+	fi
 	# remove all files whose contents matches /^tg:/
-	test -n "$(__TG_FILES)" && rm $(__TG_FILES) || :
-        # remove the series file
-	test -f $(QUILT_PATCH_DIR)/series && rm $(QUILT_PATCH_DIR)/series || :
+	rm -f $(__TG_FILES)
+	# remove the series file
+	rm -f $(QUILT_PATCH_DIR)/series
+	# remove dpkg v3 file
+	rm -f $(QUILT_PATCH_DIR)/.dpkg-source-applied
 	# try to remove directories
 	find $(QUILT_PATCH_DIR) -depth -type d -empty -execdir rmdir {} +
 	# fail if the directory could not be removed and still exists
@@ -146,7 +161,7 @@ tg-cleanexport: tg-rmdir
 
 endif
 
-.PHONY: tg-clean tg-export tg-forceclean tg-rmdir
+.PHONY: tg-clean tg-export tg-forceclean tg-rmdir tg-cleanexport
 
 # vim:ft=make:ts=8:noet
 # -*- Makefile -*-, you silly Emacs! (shamelessly stolen from quilt)

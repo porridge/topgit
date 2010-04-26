@@ -1,3 +1,35 @@
+topgit (0.8-1.1) unstable; urgency=low
+
+  [ Carsten Hey ]
+  * Non-maintainer upload with permission from the Debian TopGit maintainers.
+  * Don't call pre-commit hook if tg is not installed. (closes: #576221,
+    LP: #564616)
+
+  [ martin f. krafft ]
+  * Deal with single quotes in from/to headers (closes: #552629)
+  * Quote $LESS in case it includes spaces
+  * Simplify removal of files in tg-rmdir
+  * Also remove the dpkgv3 patch stamp file
+  * Check for applied patches/uncommitted changes before tg-rmdir
+  * tg-cleanexport is PHONY
+  * Do not fail if no quilt patches to pop
+
+  [ Michal Sojka ]
+  * Make 'tg patch' work in subdirectories
+
+  [ Thomas Schwinge ]
+  * tg-push: Filter out plain SHA1s from being pushed.
+  * tg-mail: Properly quote argument to --in-reply-to.
+  * tg-delete: Handle the case where the branch has been removed already, but
+    the base is still left.
+
+  [ Uwe Kleine-König ]
+  * change section to vcs
+  * tg mail: document config setting to prevent unintended mass mail sending
+  * tg patch: treat all files as ascii (closes: #521173)
+
+ -- Carsten Hey <carsten@debian.org>  Mon, 26 Apr 2010 10:11:16 +0200
+
 topgit (0.8-1) unstable; urgency=low
 
   [ Uwe Kleine-König ]
