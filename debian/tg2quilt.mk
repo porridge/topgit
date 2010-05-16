@@ -128,7 +128,8 @@ else
 	  echo "E: please unapply (pop) all patches and try again." >&2; \
 	  false; \
 	fi
-	@if git status -am. >/dev/null; then \
+	@git update-index -q --ignore-submodules --refresh
+	@if git diff-index --quiet --cached HEAD --ignore-submodules -- > /dev/null || git diff-files --quiet --ignore-submodules > /dev/null; then \
 	  echo "E: there are uncommitted changes in the working directory." >&2; \
 	  echo "E: please commit or revert all changes." >&2; \
 	  false; \
