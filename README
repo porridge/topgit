@@ -332,6 +332,21 @@ tg mail
 	TODO: specifying additional options and addresses on command
 	      line
 
+tg merge
+~~~~~~~~
+	Merge one or more topgit branches into the current (typically not a
+	topgit) branch.
+
+	A regular octopus "git merge" usually fails because of conflicting
+	topgit dotfiles. This command removes these files from the merged
+	commit to avoid those conflicts.
+
+	Options:
+	  -a		merge all topgit branches in the repository
+
+	If "-a" is not specified, you need to supply a single argument:
+	substring of all the branch names which you want to merge.
+
 tg remote
 ~~~~~~~~~
 	Register given remote as TopGit-controlled. This will create
