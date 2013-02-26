@@ -49,8 +49,13 @@ fi
 for top in $tops
 do
 	echo "Merging $top..." >&2
-	$debug git read-tree -m -i top-bases/$top $top
+	common=$(git merge-base HEAD $top)
+	tree=$(git write-tree)
+	$debug git read-tree -m -u $common $tree $top
+	$debug git merge-index "git-merge-one-file" -a
+
 	$debug git reset -q HEAD .topdeps .topmsg
+	$debug rm -f .topdeps .topmsg
 done
 echo "Done merging topgit branches." >&2
 
